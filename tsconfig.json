@@ -19,5 +19,5 @@
       "@packages/*": ["./packages/*"]
     }
   },
-  "include": ["packages", "example", "reducer-mapper"]
+  "include": ["packages", "example", "tests", "reducer-mapper"]
 }

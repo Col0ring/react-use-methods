@@ -1,5 +1,6 @@
 import React, { Reducer, useReducer } from 'react'
 import { Key } from '../type'
+
 interface Action<T extends Key, S> {
   type: T
   payload: any[]

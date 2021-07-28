@@ -1,5 +1,5 @@
 import { createMethodsContext, createUseMethods } from '@packages/index'
-// immer is important npm install immer
+// make sure immer has been installed
 import { combineReducers } from '@packages/reducer-mapper/immer'
 
 // 使用加入 immer

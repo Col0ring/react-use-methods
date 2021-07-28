@@ -1,4 +1,5 @@
 import { AnyAction, Middleware, Dispatch } from '../type'
+
 declare const createUseReducer: <Action extends AnyAction<any>, State>(
   ...middlewares: Middleware<Action, State>[]
 ) => (

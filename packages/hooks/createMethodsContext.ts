@@ -21,10 +21,7 @@ const createMethodsContext = <
   defaultInitialValue: S,
   customUseMethods?: typeof useMethods
 ) => {
-  const context = createContext<MethodsContextValue<S, MT>>([
-    defaultInitialValue,
-    {}
-  ] as unknown as [S, WrappedMethods<MT>])
+  const context = createContext<MethodsContextValue<S, MT> | null>(null)
   const providerFactory = (
     props: React.ProviderProps<MethodsContextValue<S, MT>>,
     children: Parameters<typeof createElement>[2]
@@ -51,10 +48,10 @@ const createMethodsContext = <
     options?: { initialValue?: S }
   ) => {
     return function ProviderWrapper(props) {
-      return React.createElement(
+      return createElement(
         MethodsProvider,
         options,
-        React.createElement(WrapperComponent, props)
+        createElement(WrapperComponent, props)
       )
     } as React.FC<P>
   }

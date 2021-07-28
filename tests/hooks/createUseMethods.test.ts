@@ -14,11 +14,11 @@ describe('hook factory createUseMethods', () => {
     }
 
     let initialState: State = {
-      count: 10
+      count: 10,
     }
     beforeEach(() => {
       initialState = {
-        count: 10
+        count: 10,
       }
       jest.useFakeTimers()
     })
@@ -48,7 +48,7 @@ describe('hook factory createUseMethods', () => {
             },
             increment() {
               return { ...state, count: state.count + 1 }
-            }
+            },
           }),
           initialState
         )
@@ -67,7 +67,7 @@ describe('hook factory createUseMethods', () => {
     it('should apply useMethods options when the first parameter is an object', async () => {
       const useMethods = createUseMethods(
         {
-          reducerMapper: combineReducers
+          reducerMapper: combineReducers,
         },
         thunk
       )
@@ -95,7 +95,7 @@ describe('hook factory createUseMethods', () => {
             increment() {
               state.count += 1
               return state
-            }
+            },
           }),
           initialState
         )

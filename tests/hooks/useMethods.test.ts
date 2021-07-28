@@ -5,19 +5,19 @@ interface State {
   count: number
 }
 let initialState: State = {
-  count: 10
+  count: 10,
 }
 
 beforeEach(() => {
   initialState = {
-    count: 10
+    count: 10,
   }
 })
 
 describe('hooks useMethods', () => {
   it('should have initialState value as the returned state value', () => {
     const createMethods = (state: State) => ({
-      doStuff: () => state
+      doStuff: () => state,
     })
 
     const { result } = renderHook(() => useMethods(createMethods, initialState))
@@ -35,7 +35,7 @@ describe('hooks useMethods', () => {
       },
       decrement() {
         return { ...state, count: state.count - 1 }
-      }
+      },
     })
 
     const { result } = renderHook(() => useMethods(createMethods, initialState))
@@ -59,7 +59,7 @@ describe('hooks useMethods', () => {
           midReset() {
             return ({ dispatch }) => {
               dispatch({
-                type: 'reset'
+                type: 'reset',
               })
             }
           },
@@ -68,7 +68,7 @@ describe('hooks useMethods', () => {
           },
           decrement() {
             return { ...state, count: state.count - 1 }
-          }
+          },
         }),
         initialState
       )

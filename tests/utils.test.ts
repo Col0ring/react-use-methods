@@ -15,6 +15,7 @@ describe('utils resolvePromise', () => {
   })
 
   it('should reject an error when the parameter is a rejected promise', async () => {
+    // eslint-disable-next-line prefer-promise-reject-errors
     await expect(resolvePromise(Promise.reject(4))).rejects.toBe(4)
   })
 })

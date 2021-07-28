@@ -9,12 +9,12 @@ describe('hook factory createMethodsContext', () => {
   }
 
   let initialState: State = {
-    sharedNumber: 0
+    sharedNumber: 0,
   }
 
   beforeEach(() => {
     initialState = {
-      sharedNumber: 0
+      sharedNumber: 0,
     }
   })
 
@@ -26,7 +26,7 @@ describe('hook factory createMethodsContext', () => {
         },
         decrement() {
           return { ...state, sharedNumber: state.sharedNumber - 1 }
-        }
+        },
       }),
       initialState
     )
@@ -56,7 +56,7 @@ describe('hook factory createMethodsContext', () => {
           },
           decrement() {
             return { ...state, sharedNumber: state.sharedNumber - 1 }
-          }
+          },
         }),
         initialState
       )
@@ -81,10 +81,10 @@ describe('hook factory createMethodsContext', () => {
           ({ children }) => <div>{children}</div>,
           {
             initialValue: {
-              sharedNumber: 10
-            }
+              sharedNumber: 10,
+            },
           }
-        )
+        ),
       })
       const [{ sharedNumber }, sharedNumberMethods] = result.current
 

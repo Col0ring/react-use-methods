@@ -5,6 +5,7 @@ import useMethods, {
   MethodTree,
 } from './useMethods'
 import { Key } from '../type'
+
 declare type MethodsContextValue<
   S,
   MT extends MethodTree<S, Record<Key, (...args: any[]) => any>>

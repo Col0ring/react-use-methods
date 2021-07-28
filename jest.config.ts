@@ -192,5 +192,5 @@ export default {
 
   // Whether to use watchman for file crawling
   // watchman: true,
-  testMatch: ['<rootDir>/tests/**/*.(test|spec).(ts|tsx)']
+  testMatch: ['<rootDir>/tests/**/*.(test|spec).(ts|tsx)'],
 }

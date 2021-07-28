@@ -7,7 +7,7 @@ interface MethodsState {
 }
 
 const Counter: React.FC = () => {
-  const [state, methods] = useMethods(
+  const [{ count }, methods] = useMethods(
     (state) => {
       return {
         increment() {
@@ -37,22 +37,22 @@ const Counter: React.FC = () => {
             // 可在这里使用诸如 redux-thunk 这样的中间件
             dispatch({
               type: 'reset',
-              payload
+              payload,
             })
           }
-        }
+        },
       }
     },
     {
-      count: 0
+      count: 0,
     } as MethodsState,
     {
-      reducerMapper: combineReducers
+      reducerMapper: combineReducers,
     }
   )
   return (
     <div>
-      {state.count}
+      {count}
       <button onClick={methods.increment}>increment</button>
       <button onClick={methods.incrementDouble}>incrementDouble</button>
       <button onClick={methods.decrement}>decrement</button>

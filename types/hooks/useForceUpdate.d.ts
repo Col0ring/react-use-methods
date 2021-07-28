@@ -1,2 +1,2 @@
-declare function useForceUpdate(): () => void;
-export default useForceUpdate;
+declare function useForceUpdate(): () => void
+export default useForceUpdate

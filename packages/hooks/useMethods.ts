@@ -55,7 +55,7 @@ function useMethods<
 ): [S, WrappedMethods<MT>] {
   const {
     customUseReducer = useReducer,
-    reducerMapper = (v: Reducer<S, Action<keyof MT, S>>) => v
+    reducerMapper = (v: Reducer<S, Action<keyof MT, S>>) => v,
   } = useMethodsOptions || {}
   // reducer 每次都运行 createMethods 拿到并传入最新的状态
   const reducer: Reducer<S, Action<keyof MT, S>> = useMemo(
@@ -70,7 +70,7 @@ function useMethods<
         resolvePromise(newState).then((resolvedState) => {
           action.dispatch?.({
             ...action,
-            resolvedState
+            resolvedState,
           })
         })
         return reducerState
@@ -115,7 +115,7 @@ export type {
   WrappedMethods,
   Method,
   MethodTree,
-  UseMethodsOptions
+  UseMethodsOptions,
 }
 export { useMethods }
 export default useMethods

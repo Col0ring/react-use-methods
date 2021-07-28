@@ -2,7 +2,7 @@ import React, { createContext, createElement, useContext, useMemo } from 'react'
 import useMethods, {
   CreateMethods,
   WrappedMethods,
-  MethodTree
+  MethodTree,
 } from './useMethods'
 import { Key } from '../type'
 
@@ -29,7 +29,7 @@ const createMethodsContext = <
 
   const MethodsProvider: React.FC<{ initialValue?: S }> = ({
     children,
-    initialValue
+    initialValue,
   }) => {
     const stateAndMethods = (customUseMethods || useMethods)(
       createMethods,

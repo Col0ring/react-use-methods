@@ -4,7 +4,7 @@ import { combineReducers } from '@packages/reducer-mapper/immer'
 
 // 使用加入 immer
 const useMethods = createUseMethods({
-  reducerMapper: combineReducers
+  reducerMapper: combineReducers,
 })
 // 也可加入所有的 redux中间件
 // import thunk from 'redux-thunk'
@@ -47,14 +47,14 @@ const [useCountContext, CounterProvider, withCountProvider] =
             // 可在这里使用诸如 redux-thunk 这样的中间件
             dispatch({
               type: 'reset',
-              payload
+              payload,
             })
           }
-        }
+        },
       }
     },
     {
-      count: 0
+      count: 0,
     } as MethodsState,
     useMethods
   )

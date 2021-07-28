@@ -2,9 +2,9 @@ node_modules
 .DS_Store
 dist
 dist-ssr
-reducer-mapper
 *.local
 yarn.lock
-yarn-error.log
 package-lock.json
-coverages
+reducer-mapper
+.eslintcache
+*.log

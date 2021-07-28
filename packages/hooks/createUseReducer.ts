@@ -45,7 +45,7 @@ const createUseReducer = <Action extends AnyAction, State>(
       composedMiddleware(
         {
           getState: () => ref.current,
-          dispatch: (action) => dispatchRef.current(action)
+          dispatch: (action) => dispatchRef.current(action),
         },
         dispatch
       )
@@ -56,7 +56,7 @@ const createUseReducer = <Action extends AnyAction, State>(
       dispatchRef.current = composedMiddleware(
         {
           getState: () => ref.current,
-          dispatch: (action) => dispatchRef.current(action)
+          dispatch: (action) => dispatchRef.current(action),
         },
         dispatch
       )

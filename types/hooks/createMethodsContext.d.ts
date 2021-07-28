@@ -34,7 +34,7 @@ declare const createMethodsContext: <
         }
       | undefined
   ) => React.FC<P>,
-  React.Context<MethodsContextValue<S, MT>>
+  React.Context<MethodsContextValue<S, MT> | null>
 ]
 export type { MethodsContextValue }
 export { createMethodsContext }

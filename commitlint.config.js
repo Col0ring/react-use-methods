@@ -11,6 +11,7 @@
  * style : 代码格式改变
  * test : 增加测试
  * anno: 增加注释
+ * type: 类型定义
  */
 // yarn global add commitizen cz-conventional-changelog 全局安装，按照 commitizen 后使用 git cz 代替 git commit，cz-conventional-changelog 是用于 cz 的适配器
 // cz-conventional-changelog  可本地安装然后在 package.json 中指定
@@ -37,6 +38,7 @@ module.exports = {
         'style',
         'test',
         'anno',
+        'type',
       ],
     ],
   },

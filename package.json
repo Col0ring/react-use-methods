@@ -1,6 +1,6 @@
 {
   "name": "react-use-methods",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "license": "MIT",
   "private": false,
   "author": {
@@ -29,7 +29,8 @@
     ".": {
       "import": "./dist/react-use-methods.es.js",
       "require": "./dist/react-use-methods.umd.js"
-    }
+    },
+    "./reducer-mapper/*": "./reducer-mapper/*.js"
   },
   "scripts": {
     "dev": "vite",

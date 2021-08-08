@@ -120,7 +120,7 @@ A factory to create the useMethods hook and you can add middlewares (like redux-
 import thunk from 'redux-thunk'
 import { createUseMethods } from 'react-use-methods'
 // make sure immer has been installed
-import { combineReducers } from 'react-use-methods/reducer-mapper/immer'
+import { combineReducers } from 'react-use-methods/reducer-mapper/es/immer'
 const useMethods = createUseMethods(
   {
     // use immer
@@ -196,7 +196,7 @@ A state management factory function that allows all components in the provider t
 // provider.js
 import { createMethodsContext, createUseMethods } from 'react-use-methods'
 // make sure immer has been installed
-import { combineReducers } from 'react-use-methods/reducer-mapper/immer'
+import { combineReducers } from 'react-use-methods/reducer-mapper/es/immer'
 
 const useMethods = createUseMethods({
   reducerMapper: combineReducers,

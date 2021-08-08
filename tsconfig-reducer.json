@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES5",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": false,
     "skipLibCheck": true,
@@ -14,7 +14,7 @@
     // "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": false,
-    "outDir": "./reducer-mapper",
+    "outDir": "./reducer-mapper/umd",
     "jsx": "react"
   },
   "include": ["packages/reducer-mapper"]

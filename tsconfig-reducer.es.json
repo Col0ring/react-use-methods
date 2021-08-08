@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig-reducer.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "outDir": "./reducer-mapper/es"
+  }
+}

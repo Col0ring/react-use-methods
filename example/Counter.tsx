@@ -3,9 +3,6 @@ import { combineReducers } from '@packages/reducer-mapper/immer'
 import React from 'react'
 import thunk from 'redux-thunk'
 
-interface MethodsState {
-  count: number
-}
 const useMethods = createUseMethods(
   {
     // use immer

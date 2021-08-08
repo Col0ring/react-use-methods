@@ -1,6 +1,6 @@
 {
   "name": "react-use-methods",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "license": "MIT",
   "private": false,
   "author": {
@@ -30,11 +30,16 @@
       "import": "./dist/react-use-methods.es.js",
       "require": "./dist/react-use-methods.umd.js"
     },
-    "./reducer-mapper/*": "./reducer-mapper/*.js"
+    "./reducer-mapper/*": {
+      "import": "./reducer-mapper/*.js",
+      "require": "./reducer-mapper/*.js"
+    }
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig-package.json && tsc -p tsconfig-reducer.json && vite build",
+    "build:plugins": "tsc -p tsconfig-reducer.json && tsc -p tsconfig-reducer.es.json",
+    "build:package": "tsc -p tsconfig-package.json && vite build",
+    "build": "npm run build:package && npm run build:plugins",
     "serve": "vite preview",
     "test": "jest",
     "test:cov": "jest --coverage",

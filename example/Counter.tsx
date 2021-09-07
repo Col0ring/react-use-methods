@@ -14,33 +14,41 @@ const useMethods = createUseMethods(
 function App() {
   const [{ count }, methods] = useMethods(
     (state) => {
-      return {
-        increment() {
-          state.count += 1
-          return state
-        },
-        decrement() {
-          state.count -= 1
-          return state
-        },
-        reset() {
-          state.count = 0
-          return state
-        },
-        addAndReset() {
-          return ({ dispatch }) => {
-            const addAndReset = () => {
-              return (thunkDispatch: typeof dispatch) => {
-                thunkDispatch({ type: 'increment' })
-                setTimeout(() => {
-                  thunkDispatch({ type: 'reset' })
-                }, 1000)
+      return [
+        {
+          increment() {
+            state.count += 1
+            return state
+          },
+          decrement() {
+            state.count -= 1
+            return state
+          },
+          reset() {
+            state.count = 0
+            return state
+          },
+          addAndReset() {
+            return ({ dispatch }) => {
+              const addAndReset = () => {
+                return (thunkDispatch: typeof dispatch) => {
+                  thunkDispatch({ type: 'increment' })
+                  setTimeout(() => {
+                    thunkDispatch({ type: 'reset' })
+                  }, 1000)
+                }
               }
+              dispatch(addAndReset())
             }
-            dispatch(addAndReset())
-          }
+          },
         },
-      }
+        {
+          async count(dispatch, newValue, oldValue) {
+            console.log(newValue)
+            console.log(oldValue)
+          },
+        },
+      ]
     },
     {
       count: 0,

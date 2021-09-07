@@ -20,7 +20,7 @@
 // commitlint 对 commit message 进行格式校验
 module.exports = {
   // 标准
-  extends: ['@commitlint/config-conventional', '@commitlint/config-angular'],
+  extends: ['@commitlint/config-angular'],
   rules: {
     'type-enum': [
       2,

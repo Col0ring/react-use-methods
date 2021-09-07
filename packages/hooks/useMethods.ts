@@ -6,7 +6,6 @@ interface Action<T extends Key, S> {
   type: T
   payload: any[]
   resolvedState?: S
-  dispatch?: React.Dispatch<Action<T, S>>
   [props: string]: any
 }
 
@@ -102,9 +101,11 @@ function useMethods<
             if (newState[prop] !== oldState[prop]) {
               effects[prop]?.(
                 (value: any) => {
-                  action.dispatch?.({
-                    ...value,
-                    dispatch: action.dispatch,
+                  Promise.resolve().then(() => {
+                    dispatch({
+                      ...value,
+                      dispatch,
+                    })
                   })
                 },
                 newState[prop],
@@ -118,11 +119,10 @@ function useMethods<
         callEffects(action.resolvedState, oldReducerState)
         return action.resolvedState
       }
-
       const newState = methods[action.type](...(action.payload || []))
       if (newState instanceof Promise) {
         resolvePromise(newState).then((resolvedState) => {
-          action.dispatch?.({
+          dispatch({
             ...action,
             resolvedState,
           })
@@ -135,12 +135,7 @@ function useMethods<
         Promise.resolve().then(() => {
           newState({
             ...action,
-            dispatch: (value: any) => {
-              action.dispatch?.({
-                ...value,
-                dispatch: action.dispatch,
-              })
-            },
+            dispatch,
           } as MethodAction<any, any>)
         })
         return reducerState
@@ -169,7 +164,7 @@ function useMethods<
       // type 是 M 的键之一，需要重新注解类型
       // eslint-disable-next-line no-param-reassign
       m[type as keyof MT] = (...payload) =>
-        dispatch({ type: type as keyof MT, payload, dispatch })
+        dispatch({ type: type as keyof MT, payload })
 
       return m
     }, {} as WrappedMethods<MT>)

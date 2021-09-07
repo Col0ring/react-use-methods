@@ -78,6 +78,78 @@ function App() {
 }
 ```
 
+You can also use effects：
+
+```tsx
+import React from 'react'
+import { useMethods } from 'react-use-methods'
+
+function App() {
+  const [{ count }, methods] = useMethods(
+    (state) => {
+      return [
+        {
+          increment() {
+            return { ...state, count: state.count + 1 }
+          },
+          // support async
+          async incrementDouble() {
+            // state.count *= 2
+            return { ...state, count: state.count * 2 }
+          },
+          decrement() {
+            return { ...state, count: state.count - 1 }
+          },
+          set(current) {
+            return { ...state, count: current }
+          },
+          reset() {
+            return { ...state, count: 0 }
+          },
+          midReset(...args) {
+            // return a function and dispatch custom action
+            return ({ type, dispatch, payload }) => {
+              console.log(type) // midReset
+              console.log(dispatch) // the dispatch of useReducer
+              console.log(payload) // args
+              // custom action here
+              dispatch({
+                type: 'reset',
+                payload,
+              })
+            }
+          },
+        },
+        {
+          count(dispatch, newValue, oldValue) {
+            console.log(newValue, oldValue)
+            if (newValue < 0) {
+              dispatch({
+                type: 'increment',
+              })
+            }
+          },
+        },
+      ]
+    },
+    {
+      count: 0,
+    }
+  )
+  return (
+    <div>
+      {count}
+      <button onClick={methods.increment}>increment</button>
+      <button onClick={methods.incrementDouble}>incrementDouble</button>
+      <button onClick={methods.decrement}>decrement</button>
+      <button onClick={() => methods.set(10)}>set 10</button>
+      <button onClick={() => methods.reset()}>reset</button>
+      <button onClick={() => methods.midReset()}>midReset</button>
+    </div>
+  )
+}
+```
+
 #### Reference
 
 ```js
@@ -88,7 +160,7 @@ const [state, methods] = useMethods(
 )
 ```
 
-- `createMethods` : function that takes current state and return an object containing methods that return updated state.
+- `createMethods` : function that takes current state or An array containing state and effects and return an object containing methods that return updated state.
 
 - `initialState` : initial value of the state.
 

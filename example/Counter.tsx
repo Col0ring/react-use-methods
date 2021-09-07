@@ -44,8 +44,17 @@ function App() {
         },
         {
           async count(dispatch, newValue, oldValue) {
-            console.log(newValue)
-            console.log(oldValue)
+            console.log(newValue, oldValue)
+            if (newValue < 0) {
+              dispatch({
+                type: 'increment',
+              })
+            }
+            if (newValue > 10) {
+              dispatch({
+                type: 'addAndReset',
+              })
+            }
           },
         },
       ]

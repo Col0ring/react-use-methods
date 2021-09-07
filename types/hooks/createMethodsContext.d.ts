@@ -3,6 +3,7 @@ import useMethods, {
   CreateMethods,
   WrappedMethods,
   MethodTree,
+  GetMethodTree,
 } from './useMethods'
 import { Key } from '../type'
 
@@ -16,7 +17,7 @@ declare const createMethodsContext: <
     S,
     MethodTree<S, Record<Key, (...args: any[]) => any>>
   >,
-  MT extends ReturnType<CM>
+  MT extends GetMethodTree<ReturnType<CM>>
 >(
   createMethods: CM,
   defaultInitialValue: S,

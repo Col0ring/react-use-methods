@@ -3,6 +3,7 @@ import useMethods, {
   CreateMethods,
   WrappedMethods,
   MethodTree,
+  GetMethodTree,
 } from './useMethods'
 import { Key } from '../type'
 
@@ -15,7 +16,7 @@ const createMethodsContext = <
   // eslint-disable-next-line @typescript-eslint/ban-types
   S extends Record<Key, any>,
   CM extends CreateMethods<S>,
-  MT extends ReturnType<CM>
+  MT extends GetMethodTree<ReturnType<CM>>
 >(
   createMethods: CM,
   defaultInitialValue: S,

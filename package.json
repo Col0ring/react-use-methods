@@ -1,6 +1,6 @@
 {
   "name": "react-use-methods",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "license": "MIT",
   "private": false,
   "author": {
@@ -40,6 +40,7 @@
     "build:plugins": "tsc -p tsconfig-reducer.json && tsc -p tsconfig-reducer.es.json",
     "build:package": "tsc -p tsconfig-package.json && vite build",
     "build": "npm run build:package && npm run build:plugins",
+    "postbuild": "npm run lint",
     "serve": "vite preview",
     "test": "jest",
     "test:cov": "jest --coverage",

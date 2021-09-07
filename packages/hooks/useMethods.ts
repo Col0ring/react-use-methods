@@ -31,14 +31,13 @@ type CreateMethodsReturn<S, MT> =
   | [
       methods: MT,
       effects?: Partial<
-        Record<
-          keyof S,
-          (
+        {
+          [P in keyof S]: (
             dispatch: React.Dispatch<any>,
-            newValue: S[keyof S],
-            oldValue: S[keyof S]
+            newValue: S[P],
+            oldValue: S[P]
           ) => void
-        >
+        }
       >
     ]
 
@@ -79,7 +78,7 @@ interface UseMethodsOptions<S, A> {
 function useMethods<
   S extends Record<Key, any>,
   CM extends CreateMethods<S>,
-  MT extends ReturnType<CM>
+  MT extends GetMethodTree<ReturnType<CM>>
 >(
   createMethods: CM,
   initialState: S,
@@ -187,6 +186,7 @@ export type {
   Method,
   MethodTree,
   UseMethodsOptions,
+  GetMethodTree,
 }
 export { useMethods }
 export default useMethods

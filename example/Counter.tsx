@@ -52,6 +52,7 @@ function App() {
     },
     {
       count: 0,
+      ss: '1',
     }
   )
   return (

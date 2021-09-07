@@ -29,7 +29,7 @@ function createUseMethods<Action extends AnyAction, State>(
   ) =>
     useMethods(createMethods, initialState, {
       customUseReducer: methodsReducer,
-      ...(isOption ? (options as typeof useMethodsOptions) : {}),
+      ...(isOption ? (options as unknown as typeof useMethodsOptions) : {}),
       ...useMethodsOptions,
     })
   return useMethodsWrapper

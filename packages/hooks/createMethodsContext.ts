@@ -4,27 +4,31 @@ import useMethods, {
   WrappedMethods,
   MethodTree,
   GetMethodTree,
+  ActionTree,
+  GetActionTree,
 } from './useMethods'
 import { Key } from '../type'
 
 type MethodsContextValue<
   S,
-  MT extends MethodTree<S, Record<Key, (...args: any[]) => any>>
-> = [S, WrappedMethods<MT>]
+  MT extends MethodTree<S, Record<Key, (...args: any[]) => any>>,
+  AT extends ActionTree<Record<Key, (...args: any[]) => any>>
+> = [S, WrappedMethods<MT, AT>]
 
 const createMethodsContext = <
   // eslint-disable-next-line @typescript-eslint/ban-types
   S extends Record<Key, any>,
   CM extends CreateMethods<S>,
-  MT extends GetMethodTree<ReturnType<CM>>
+  MT extends GetMethodTree<ReturnType<CM>>,
+  AT extends GetActionTree<ReturnType<CM>>
 >(
   createMethods: CM,
   defaultInitialValue: S,
   customUseMethods?: typeof useMethods
 ) => {
-  const context = createContext<MethodsContextValue<S, MT> | null>(null)
+  const context = createContext<MethodsContextValue<S, MT, AT> | null>(null)
   const providerFactory = (
-    props: React.ProviderProps<MethodsContextValue<S, MT>>,
+    props: React.ProviderProps<MethodsContextValue<S, MT, AT>>,
     children: Parameters<typeof createElement>[2]
   ) => createElement(context.Provider, props, children)
 

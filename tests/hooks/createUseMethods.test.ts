@@ -28,33 +28,36 @@ describe('hook factory createUseMethods', () => {
       const { result } = renderHook(() =>
         useMethods(
           (state) => ({
-            addAndReset() {
-              return ({ dispatch }) => {
-                const addAndReset = () => {
-                  return (thunkDispatch: typeof dispatch) => {
-                    thunkDispatch({ type: 'increment' })
+            methods: {
+              reset() {
+                return initialState
+              },
+              increment() {
+                return { ...state, count: state.count + 1 }
+              },
+            },
+            actions: {
+              addAndReset() {
+                return ({ dispatch }) => {
+                  const addAndReset = () => {
+                    return (thunkDispatch: typeof dispatch) => {
+                      thunkDispatch({ type: 'increment' })
 
-                    setTimeout(() => {
-                      thunkDispatch({ type: 'reset' })
-                    }, 1000)
+                      setTimeout(() => {
+                        thunkDispatch({ type: 'reset' })
+                      }, 1000)
+                    }
                   }
+                  dispatch(addAndReset())
                 }
-
-                dispatch(addAndReset())
-              }
-            },
-            reset() {
-              return initialState
-            },
-            increment() {
-              return { ...state, count: state.count + 1 }
+              },
             },
           }),
           initialState
         )
       )
       await act(async () => {
-        result.current[1].addAndReset()
+        result.current[1].actions.addAndReset()
       })
       expect(result.current[0]).toEqual({ count: 11 })
       // fast-forward until all timers have been executed
@@ -74,27 +77,31 @@ describe('hook factory createUseMethods', () => {
       const { result } = renderHook(() =>
         useMethods(
           (state) => ({
-            addAndReset() {
-              return ({ dispatch }) => {
-                const addAndReset = () => {
-                  return (thunkDispatch: typeof dispatch) => {
-                    thunkDispatch({ type: 'increment' })
+            actions: {
+              addAndReset() {
+                return ({ dispatch }) => {
+                  const addAndReset = () => {
+                    return (thunkDispatch: typeof dispatch) => {
+                      thunkDispatch({ type: 'increment' })
 
-                    setTimeout(() => {
-                      thunkDispatch({ type: 'reset' })
-                    }, 1000)
+                      setTimeout(() => {
+                        thunkDispatch({ type: 'reset' })
+                      }, 1000)
+                    }
                   }
-                }
 
-                dispatch(addAndReset())
-              }
+                  dispatch(addAndReset())
+                }
+              },
             },
-            reset() {
-              return initialState
-            },
-            increment() {
-              state.count += 1
-              return state
+            methods: {
+              reset() {
+                return initialState
+              },
+              increment() {
+                state.count += 1
+                return state
+              },
             },
           }),
           initialState
@@ -106,7 +113,7 @@ describe('hook factory createUseMethods', () => {
       expect(result.current[0]).toEqual({ count: 11 })
 
       await act(async () => {
-        result.current[1].addAndReset()
+        result.current[1].actions.addAndReset()
       })
       expect(result.current[0]).toEqual({ count: 12 })
       act(() => {

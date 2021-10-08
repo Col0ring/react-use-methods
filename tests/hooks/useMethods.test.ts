@@ -12,6 +12,7 @@ beforeEach(() => {
   initialState = {
     count: 10,
   }
+  jest.useFakeTimers()
 })
 
 describe('hooks useMethods', () => {
@@ -41,9 +42,7 @@ describe('hooks useMethods', () => {
     const { result } = renderHook(() => useMethods(createMethods, initialState))
     const keys = Object.keys(createMethods(initialState))
     for (const key of keys) {
-      expect(
-        result.current[1][key as keyof typeof result.current[1]]
-      ).toBeDefined()
+      expect(result.current[1][key]).toBeDefined()
     }
   })
 
@@ -53,21 +52,27 @@ describe('hooks useMethods', () => {
     const { result } = renderHook(() =>
       useMethods(
         (state) => ({
-          reset() {
-            return initialState
+          methods: {
+            reset() {
+              return initialState
+            },
+            decrement() {
+              return { ...state, count: state.count - 1 }
+            },
+            increment() {
+              return { ...state, count: state.count + 1 }
+            },
           },
-          midReset() {
-            return ({ dispatch }) => {
-              dispatch({
-                type: 'reset',
-              })
-            }
-          },
-          async increment() {
-            return { ...state, count: state.count + 1 }
-          },
-          decrement() {
-            return { ...state, count: state.count - 1 }
+          actions: {
+            midReset() {
+              return async ({ dispatch }) => {
+                setTimeout(() => {
+                  dispatch({
+                    type: 'reset',
+                  })
+                }, 1000)
+              }
+            },
           },
         }),
         initialState
@@ -98,9 +103,66 @@ describe('hooks useMethods', () => {
     act(() => {
       result.current[1].increment()
     })
+
     await act(async () => {
       result.current[1].midReset()
     })
+
+    act(() => {
+      jest.runAllTimers()
+    })
+
     expect(result.current[0].count).toBe(count)
+  })
+
+  it('should have effects for value changed', async () => {
+    const count = 10
+    const { result } = renderHook(() =>
+      useMethods(
+        (state) => ({
+          methods: {
+            reset() {
+              return initialState
+            },
+            increment() {
+              return { ...state, count: state.count + 1 }
+            },
+            decrement() {
+              return { ...state, count: state.count - 1 }
+            },
+          },
+          effects: {
+            count(dispatch, newValue) {
+              if (newValue > 10) {
+                dispatch({
+                  type: 'reset',
+                })
+              }
+            },
+          },
+        }),
+        initialState
+      )
+    )
+
+    act(() => {
+      result.current[1].increment()
+    })
+    expect(result.current[0].count).toBe(count)
+
+    act(() => {
+      result.current[1].decrement()
+    })
+    expect(result.current[0].count).toBe(count - 1)
+
+    act(() => {
+      result.current[1].decrement()
+    })
+    expect(result.current[0].count).toBe(count - 2)
+
+    act(() => {
+      result.current[1].increment()
+    })
+    expect(result.current[0].count).toBe(count - 1)
   })
 })

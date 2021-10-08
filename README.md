@@ -28,35 +28,39 @@ function App() {
   const [{ count }, methods] = useMethods(
     (state) => {
       return {
-        increment() {
-          return { ...state, count: state.count + 1 }
+        methods: {
+          increment() {
+            return { ...state, count: state.count + 1 }
+          },
+          incrementDouble() {
+            return { ...state, count: state.count * 2 }
+          },
+          decrement() {
+            return { ...state, count: state.count - 1 }
+          },
+          set(current) {
+            return { ...state, count: current }
+          },
+          reset() {
+            return { ...state, count: 0 }
+          },
         },
-        // support async
-        async incrementDouble() {
-          // state.count *= 2
-          return { ...state, count: state.count * 2 }
-        },
-        decrement() {
-          return { ...state, count: state.count - 1 }
-        },
-        set(current) {
-          return { ...state, count: current }
-        },
-        reset() {
-          return { ...state, count: 0 }
-        },
-        midReset(...args) {
-          // return a function and dispatch custom action
-          return ({ type, dispatch, payload }) => {
-            console.log(type) // midReset
-            console.log(dispatch) // the dispatch of useReducer
-            console.log(payload) // args
-            // custom action here
-            dispatch({
-              type: 'reset',
-              payload,
-            })
-          }
+        actions: {
+          // custom action here，support async function
+          midReset(...args) {
+            // return a function and dispatch custom action
+            return async ({ type, dispatch, payload }) => {
+              console.log(type) // midReset
+              console.log(dispatch) // the dispatch of useReducer
+              console.log(payload) // args
+              setTimeout(() => {
+                dispatch({
+                  type: 'reset',
+                  payload,
+                })
+              }, 1000)
+            }
+          },
         },
       }
     },
@@ -64,10 +68,11 @@ function App() {
       count: 0,
     }
   )
+  // methods contains all functions in methods and actions and combines them
   return (
     <div>
       {count}
-      <button onClick={methods.increment}>increment</button>
+      <button onClick={methods.methods.increment}>increment</button>
       <button onClick={methods.incrementDouble}>incrementDouble</button>
       <button onClick={methods.decrement}>decrement</button>
       <button onClick={() => methods.set(10)}>set 10</button>
@@ -87,14 +92,12 @@ import { useMethods } from 'react-use-methods'
 function App() {
   const [{ count }, methods] = useMethods(
     (state) => {
-      return [
-        {
+      return {
+        methods: {
           increment() {
             return { ...state, count: state.count + 1 }
           },
-          // support async
-          async incrementDouble() {
-            // state.count *= 2
+          incrementDouble() {
             return { ...state, count: state.count * 2 }
           },
           decrement() {
@@ -106,6 +109,8 @@ function App() {
           reset() {
             return { ...state, count: 0 }
           },
+        },
+        actions: {
           midReset(...args) {
             // return a function and dispatch custom action
             return ({ type, dispatch, payload }) => {
@@ -120,7 +125,7 @@ function App() {
             }
           },
         },
-        {
+        effects: {
           count(dispatch, newValue, oldValue) {
             console.log(newValue, oldValue)
             if (newValue < 0) {
@@ -130,7 +135,7 @@ function App() {
             }
           },
         },
-      ]
+      }
     },
     {
       count: 0,
@@ -160,7 +165,7 @@ const [state, methods] = useMethods(
 )
 ```
 
-- `createMethods` : function that takes current state or An array containing state and effects and return an object containing methods that return updated state.
+- `createMethods` : function that takes current state or An object containing methods, actions and effects, return an object containing methods that return updated state.
 
 - `initialState` : initial value of the state.
 
@@ -205,30 +210,33 @@ function App() {
   const [{ count }, methods] = useMethods(
     (state) => {
       return {
-        increment() {
-          state.count += 1
-          return state
+        methods: {
+          increment() {
+            state.count += 1
+            return state
+          },
+          decrement() {
+            return { ...state, count: state.count - 1 }
+          },
+          reset() {
+            state.count = 0
+            return state
+          },
         },
-        async decrement() {
-          // note: do not use immer when return a promise
-          return { ...state, count: state.count - 1 }
-        },
-        reset() {
-          state.count = 0
-          return state
-        },
-        addAndReset() {
-          return ({ dispatch }) => {
-            const addAndReset = () => {
-              return (thunkDispatch) => {
-                thunkDispatch({ type: 'increment' })
-                setTimeout(() => {
-                  thunkDispatch({ type: 'reset' })
-                }, 1000)
+        actions: {
+          addAndReset() {
+            return ({ dispatch }) => {
+              const addAndReset = () => {
+                return (thunkDispatch) => {
+                  thunkDispatch({ type: 'increment' })
+                  setTimeout(() => {
+                    thunkDispatch({ type: 'reset' })
+                  }, 1000)
+                }
               }
+              dispatch(addAndReset())
             }
-            dispatch(addAndReset())
-          }
+          },
         },
       }
     },
@@ -278,11 +286,12 @@ const [useCountContext, CounterProvider, withCountProvider] =
   createMethodsContext(
     (state) => {
       return {
+        // if we don't need actions，we can move the methods to the fist level
         increment() {
           state.count += 1
           return state
         },
-        async incrementDouble() {
+        incrementDouble() {
           return { ...state, count: state.count * 2 }
         },
         decrement() {

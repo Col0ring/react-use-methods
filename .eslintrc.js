@@ -50,7 +50,7 @@ module.exports = {
     'no-debugger': 'warn', // 调试
     'no-console': 'off', // 日志打印
     'react/prop-types': 'off', // react props声明检测
-    'react-hooks/exhaustive-deps': 'off', // react-hooks必须声明依赖
+    // 'react-hooks/exhaustive-deps': 'off', // react-hooks必须声明依赖
     'no-nested-ternary': 'off', // 禁止嵌套三元表达式
     'react/no-array-index-key': 'off', // 数组不能用index相关为key
     'react/no-did-mount-set-state': 'off', // 禁止在didMount中使用setState

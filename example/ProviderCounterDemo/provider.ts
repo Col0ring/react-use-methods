@@ -20,36 +20,38 @@ const [useCountContext, CounterProvider, withCountProvider] =
   createMethodsContext(
     (state) => {
       return {
-        increment() {
-          state.count += 1
-          // 这里可以不导出也不会报错，但是 ts 会报错
-          return state
+        methods: {
+          increment() {
+            state.count += 1
+            // 这里可以不导出也不会报错，但是 ts 会报错
+            return state
+          },
+          incrementDouble() {
+            // state.count *= 2
+            return { ...state, count: state.count * 2 }
+          },
+          decrement() {
+            state.count -= 1
+            return state
+          },
+          set(current: number) {
+            // 直接返回
+            return { ...state, count: current }
+          },
+          reset() {
+            return { ...state, count: 0 }
+          },
         },
-        // 支持异步
-        async incrementDouble() {
-          // 异步不要使用 immer
-          // state.count *= 2
-          return { ...state, count: state.count * 2 }
-        },
-        decrement() {
-          state.count -= 1
-          return state
-        },
-        set(current: number) {
-          // 直接返回
-          return { ...state, count: current }
-        },
-        reset() {
-          return { ...state, count: 0 }
-        },
-        midReset() {
-          return async ({ dispatch, payload }) => {
-            // 可在这里使用诸如 redux-thunk 这样的中间件
-            dispatch({
-              type: 'reset',
-              payload,
-            })
-          }
+        actions: {
+          midReset() {
+            return async ({ dispatch, payload }) => {
+              // 可在这里使用诸如 redux-thunk 这样的中间件
+              dispatch({
+                type: 'reset',
+                payload,
+              })
+            }
+          },
         },
       }
     },

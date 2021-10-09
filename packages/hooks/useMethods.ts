@@ -210,6 +210,14 @@ function useMethods<
       methods: {},
       actions: {},
     } as WrappedMethods<MT, AT>
+
+    // 重新生成 methods
+    methodsTypes.reduce((m, type: keyof MT) => {
+      m.methods[type] = (...payload) => dispatch({ type, dispatch, payload })
+      m[type] = m.methods[type] as WrappedMethods<MT, AT>[keyof MT]
+      return m
+    }, currentWrappedMethods)
+
     actionsTypes.reduce((m, type: keyof AT) => {
       m.actions[type] = (...payload) =>
         actions[type](...payload)({
@@ -217,14 +225,8 @@ function useMethods<
           dispatch,
           payload,
         })
+      // 如果有相同的 type actions 会覆盖 methods
       m[type] = m.actions[type] as WrappedMethods<MT, AT>[keyof AT]
-      return m
-    }, currentWrappedMethods)
-
-    // 重新生成 methods
-    methodsTypes.reduce((m, type: keyof MT) => {
-      m.methods[type] = (...payload) => dispatch({ type, dispatch, payload })
-      m[type] = m.methods[type] as WrappedMethods<MT, AT>[keyof MT]
       return m
     }, currentWrappedMethods)
 

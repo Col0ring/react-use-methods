@@ -1,6 +1,6 @@
 # React-Use-Methods
 
-> a minimalist state management hooks inspired by react-use
+> a minimal state management hooks inspired by react-use
 
 Instead of useReducer, give you the best typescript experience.
 

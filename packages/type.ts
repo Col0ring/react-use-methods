@@ -1,4 +1,5 @@
-export type Key = string | number | symbol
+export type Key = PropertyKey
+
 export type ResolvePromise<T> = T extends Promise<infer U> ? U : T
 
 export interface AnyAction<T = any> {

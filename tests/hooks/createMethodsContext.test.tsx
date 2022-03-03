@@ -74,8 +74,9 @@ describe('hook factory createMethodsContext', () => {
       expect(sharedNumberMethods).toHaveProperty('increment')
       expect(sharedNumberMethods).toHaveProperty('decrement')
     })
+
     it('should init state and updater when use provider hoc', () => {
-      const [useSharedNumber, , withSharedNumberProvider] = setUpContext()
+      const [useSharedNumber, , , withSharedNumberProvider] = setUpContext()
       const { result } = renderHook(() => useSharedNumber(), {
         wrapper: withSharedNumberProvider(
           ({ children }) => <div>{children}</div>,
@@ -106,7 +107,7 @@ describe('hook factory createMethodsContext', () => {
   })
 
   describe('when using among multiple components', () => {
-    const [useSharedNumber, SharedNumberProvider] = setUpContext()
+    const [useSharedNumber, SharedNumberProvider, connect] = setUpContext()
 
     const DisplayComponent = () => {
       const [{ sharedNumber }] = useSharedNumber()
@@ -163,6 +164,52 @@ describe('hook factory createMethodsContext', () => {
 
       expect(baseElement.innerHTML).toBe(
         '<div><p>0</p><p>1</p><button type="button">INCREMENT</button></div>'
+      )
+    })
+
+    it('should inject state and methods when use connect', () => {
+      type SharedNumberState = ReturnType<typeof useSharedNumber>[0]
+      type SharedNumberMethods = ReturnType<typeof useSharedNumber>[1]
+      interface InjectDisplayComponentProps {
+        state: SharedNumberState
+        methods: SharedNumberMethods
+      }
+      const InjectDisplayComponent = connect(
+        ({ state }: InjectDisplayComponentProps) => {
+          return <p>{state.sharedNumber}</p>
+        }
+      )()
+
+      interface InjectUpdateComponentProps {
+        increment: SharedNumberMethods['increment']
+      }
+      const InjectUpdateComponent = connect(
+        ({ increment }: InjectUpdateComponentProps) => {
+          return (
+            <button type="button" onClick={() => increment()}>
+              INCREMENT
+            </button>
+          )
+        }
+      )((_, { increment }) => ({ increment }))
+
+      const { baseElement, getByText } = render(
+        <>
+          <SharedNumberProvider>
+            <InjectDisplayComponent />
+            <InjectUpdateComponent />
+          </SharedNumberProvider>
+        </>
+      )
+
+      expect(baseElement.innerHTML).toBe(
+        '<div><p>0</p><button type="button">INCREMENT</button></div>'
+      )
+
+      fireEvent.click(getByText('INCREMENT'))
+
+      expect(baseElement.innerHTML).toBe(
+        '<div><p>1</p><button type="button">INCREMENT</button></div>'
       )
     })
 

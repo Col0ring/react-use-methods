@@ -282,7 +282,7 @@ const useMethods = createUseMethods({
   reducerMapper: combineReducers,
 })
 
-const [useCountContext, CounterProvider, withCountProvider] =
+const [useCountContext, CounterProvider, withCountProvider, connect] =
   createMethodsContext(
     (state) => {
       return {
@@ -312,7 +312,7 @@ const [useCountContext, CounterProvider, withCountProvider] =
     useMethods
   )
 
-export { useCountContext, CounterProvider, withCountProvider }
+export { useCountContext, CounterProvider, withCountProvider, connect }
 ```
 
 ```jsx
@@ -375,9 +375,111 @@ export default withCountProvider(Counter, {
 })
 ```
 
+You can also use `connect` api, like `react-redux`。
+
+```jsx
+import React from 'react'
+import { useCountContext, connect } from './provider'
+
+function Counter(props) {
+  // inject state and methods by default
+  const { state, methods } = props
+  return (
+    <div>
+      {state.count}
+      <button onClick={methods.increment}>increment</button>
+      <button onClick={methods.incrementDouble}>incrementDouble</button>
+      <button onClick={methods.decrement}>decrement</button>
+      <button onClick={() => methods.set(10)}>set 10</button>
+      <button onClick={() => methods.reset()}>reset</button>
+    </div>
+  )
+}
+
+export default connect(Counter)()
+```
+
+For Typescript，you can:
+
+```tsx
+import React from 'react'
+import { useCountContext, withCountProvider } from './provider'
+
+type CountState = ReturnType<typeof useCountContext>[0]
+type CountMethods = ReturnType<typeof useCountContext>[1]
+
+// Don't worry about external Typescript error, the connect function will clear its effects
+interface CounterProps {
+  state: CountState
+  methods: CountMethods
+}
+
+function Counter(props: CounterProps) {
+  // inject state and methods by default
+  const { state, methods } = props
+  return (
+    <div>
+      {state.count}
+      <button onClick={methods.increment}>increment</button>
+      <button onClick={methods.incrementDouble}>incrementDouble</button>
+      <button onClick={methods.decrement}>decrement</button>
+      <button onClick={() => methods.set(10)}>set 10</button>
+      <button onClick={() => methods.reset()}>reset</button>
+    </div>
+  )
+}
+
+export default connect(Counter)()
+```
+
+Accept a mapper function:
+
+```tsx
+import React from 'react'
+import { useCountContext, withCountProvider } from './provider'
+
+type CountState = ReturnType<typeof useCountContext>[0]
+type CountMethods = ReturnType<typeof useCountContext>[1]
+
+// Don't worry about external Typescript error, the connect function will clear its effects
+interface CounterProps{
+  count: CountState['count']
+  methods: CountMethods
+}
+
+function Counter(props: CounterProps) {
+  // inject state and methods by default
+  const { count, methods } = props
+  return (
+    <div>
+      {count}
+      <button onClick={methods.increment}>increment</button>
+      <button onClick={methods.incrementDouble}>incrementDouble</button>
+      <button onClick={methods.decrement}>decrement</button>
+      <button onClick={() => methods.set(10)}>set 10</button>
+      <button onClick={() => methods.reset()}>reset</button>
+    </div>
+  )
+}
+
+export default connect(Counter)(({ count } , methods) => ({
+  count,
+  methods
+})
+```
+
 #### Reference
 
 ```js
-const [useMethods, MethodsProvider, withMethodsProvider, methodsContext] =
-  createUseMethodsContext(createMethods, defaultInitialValue, customUseMethods)
+const [
+  useMethods,
+  MethodsProvider,
+  withMethodsProvider,
+  connect,
+  methodsContext,
+] = createUseMethodsContext(
+  createMethods,
+  defaultInitialValue,
+  customUseMethods
+)
 ```

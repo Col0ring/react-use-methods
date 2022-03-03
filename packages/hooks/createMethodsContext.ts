@@ -61,6 +61,32 @@ const createMethodsContext = <
     } as React.FC<P>
   }
 
+  // like redux connect
+  const connect = <P>(WrapperComponent: React.ElementType<P>) => {
+    return function <
+      M = {
+        state: S
+        methods: WrappedMethods<MT, AT>
+      }
+    >(mapper?: (state: S, methods: WrappedMethods<MT, AT>) => M) {
+      return function ContextWrapper(props) {
+        const [state, methods] = useMethodsContext()
+        const mapperProps = useMemo(
+          () =>
+            mapper?.(state, methods) || {
+              state,
+              methods,
+            },
+          [state, methods]
+        )
+        return createElement(WrapperComponent, {
+          ...mapperProps,
+          ...props,
+        } as P & M)
+      } as React.FC<Omit<P, keyof M>>
+    }
+  }
+
   function useMethodsContext() {
     const stateAndMethods = useContext(context)
     if (stateAndMethods === null) {
@@ -71,7 +97,13 @@ const createMethodsContext = <
     return stateAndMethods
   }
 
-  return [useMethodsContext, MethodsProvider, withProvider, context] as const
+  return [
+    useMethodsContext,
+    MethodsProvider,
+    connect,
+    withProvider,
+    context,
+  ] as const
 }
 
 export type { MethodsContextValue }

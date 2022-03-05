@@ -18,11 +18,9 @@
   "files": [
     "dist",
     "reducer-mapper",
-    "packages",
-    "types"
+    "packages"
   ],
-  "types": "./types",
-  "typings": "./types/index.d.ts",
+  "typings": "./dist/types/index.d.ts",
   "main": "./dist/react-use-methods.umd.js",
   "module": "./dist/react-use-methods.es.js",
   "exports": {
@@ -38,7 +36,7 @@
   "scripts": {
     "dev": "vite",
     "build:plugins": "tsc -p tsconfig-reducer.json && tsc -p tsconfig-reducer.es.json",
-    "build:package": "tsc -p tsconfig-package.json && vite build",
+    "build:package": "vite build && tsc -p tsconfig-package.json",
     "build": "npm run build:package && npm run build:plugins",
     "postbuild": "npm run lint",
     "serve": "vite preview",
@@ -53,11 +51,11 @@
     "pre-commit:lint-staged": "lint-staged",
     "commit-msg:commitlint": "commitlint --config commitlint.config.js -e $HUSKY_GIT_PARAMS"
   },
+  "peerDependencies": {
+    "react": "^17.0.0"
+  },
   "dependencies": {
-    "immer": "^9.0.6",
-    "react": "^17.0.0",
-    "react-dom": "^17.0.0",
-    "react-thunk": "^1.0.0"
+    "immer": "^9.0.6"
   },
   "devDependencies": {
     "@commitlint/cli": "^13.1.0",
@@ -88,6 +86,9 @@
     "jest": "^27.1.0",
     "lint-staged": "^11.1.2",
     "prettier": "^2.3.2",
+    "react": "^17.0.0",
+    "react-dom": "^17.0.0",
+    "react-thunk": "^1.0.0",
     "ts-jest": "^27.0.5",
     "ts-node": "^10.2.1",
     "typescript": "^4.4.2",

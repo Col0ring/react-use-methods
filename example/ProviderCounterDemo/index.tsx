@@ -12,6 +12,7 @@ const Counter: React.FC = () => {
       <button onClick={() => methods.set(10)}>set 10</button>
       <button onClick={() => methods.reset()}>reset</button>
       <button onClick={() => methods.midReset()}>midReset</button>
+      <button onClick={() => methods.addAndReset()}>addAndReset</button>
     </div>
   )
 }

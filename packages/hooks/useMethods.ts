@@ -1,21 +1,32 @@
 import React, { Reducer, useEffect, useMemo, useReducer } from 'react'
 import { Key } from '../type'
+import { isInternalAction } from '../utils'
+import createUseReducer from './createUseReducer'
 import usePrevious from './usePrevious'
 
-interface Action<T extends Key> {
-  type: T
-  dispatch: React.Dispatch<Action<T>>
+interface Action {
+  type: Key
+  // 内部 dispatch。需要带上 dispatch 参数
+  dispatch: React.Dispatch<Action>
   payload?: any[]
   [props: string]: any
 }
 
+// 外部 action
+type DispatchAction = Omit<Action, 'dispatch'>
+
+declare function dispatchFunction(value: DispatchAction): void
+declare function dispatchFunction(value: any): void
+
+type DispatchFunction = typeof dispatchFunction
+
 // TODO: correct key
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface MethodAction<T extends Key, M extends (...args: any[]) => any> {
+interface MethodAction<P extends any[]> {
   type: Key
   // 用于中间件的操作
-  dispatch: React.Dispatch<any>
-  payload: Parameters<M>
+  dispatch: DispatchFunction
+  payload: P
   [props: string]: any
 }
 
@@ -25,12 +36,12 @@ type MethodTree<S, MT extends Record<Key, (...args: any[]) => any>> = {
   [K in keyof MT]: MethodFunction<S>
 }
 
-type ActionFunction<K extends Key, M extends (...args: any[]) => any> = (
-  ...args: any[]
-) => (action: MethodAction<K, M>) => void
+type ActionFunction<P extends any[] = any[]> = (
+  ...args: P
+) => (action: MethodAction<P>) => void
 
 type ActionTree<AT extends Record<Key, (...args: any[]) => any>> = {
-  [K in keyof AT]: ActionFunction<K, AT[K]>
+  [K in keyof AT]: ActionFunction
 }
 
 type CreateMethodsReturn<
@@ -42,15 +53,13 @@ type CreateMethodsReturn<
   | {
       methods: MT
       actions?: AT
-      effects?: Partial<
-        {
-          [P in keyof S]: (
-            dispatch: React.Dispatch<any>,
-            newValue: S[P],
-            oldValue: S[P]
-          ) => void
-        }
-      >
+      effects?: Partial<{
+        [P in keyof S]: (
+          dispatch: DispatchFunction,
+          newValue: S[P],
+          oldValue: S[P]
+        ) => void
+      }>
     }
 
 type GetMethodTree<
@@ -117,36 +126,33 @@ function isSimplyMethods<S extends Record<Key, any>>(
 ): val is MethodTree<S, Record<Key, (...args: any[]) => any>> {
   return !val.methods
 }
-
+const defaultUseReducer = createUseReducer()
 function useMethods<
   S extends Record<Key, any>,
   CM extends CreateMethods<S>,
   MT extends GetMethodTree<ReturnType<CM>>,
-  AT extends GetActionTree<ReturnType<CM>>,
-  MAT extends MT & AT
+  AT extends GetActionTree<ReturnType<CM>>
 >(
   createMethods: CM,
   initialState: S,
-  useMethodsOptions?: UseMethodsOptions<S, Action<keyof MAT>>
+  useMethodsOptions?: UseMethodsOptions<S, Action>
 ): [S, WrappedMethods<MT, AT>] {
   const {
-    customUseReducer = useReducer,
-    reducerMapper = (v: Reducer<S, Action<keyof MAT>>) => v,
+    customUseReducer = defaultUseReducer as typeof useReducer,
+    reducerMapper = (v: Reducer<S, Action>) => v,
   } = useMethodsOptions || {}
 
   const createdMethods = useMemo(() => {
     const methods = createMethods(initialState)
     if (isSimplyMethods(methods)) {
       return {
-        effects: {} as Partial<
-          {
-            [P in keyof S]: (
-              dispatch: React.Dispatch<Action<Key>>,
-              newValue: S[P],
-              oldValue: S[P]
-            ) => void
-          }
-        >,
+        effects: {} as Partial<{
+          [P in keyof S]: (
+            dispatch: React.Dispatch<Action>,
+            newValue: S[P],
+            oldValue: S[P]
+          ) => void
+        }>,
         actions: {} as AT,
         methods,
       }
@@ -155,36 +161,39 @@ function useMethods<
   }, [createMethods, initialState])
 
   // reducer 每次都运行 createMethods 拿到并传入最新的状态
-  const reducer: Reducer<S, Action<keyof MAT>> = useMemo(
-    () => (reducerState, action) => {
-      const currentCreatedMethods = createMethods(reducerState)
+  const reducer: Reducer<S, Action> = useMemo(
+    () =>
+      ({ reducerState, getState }, action) => {
+        const currentCreatedMethods = createMethods(reducerState)
 
-      const { methods, actions } = !isSimplyMethods(currentCreatedMethods)
-        ? currentCreatedMethods
-        : {
-            actions: {} as AT,
-            methods: currentCreatedMethods,
-          }
+        const { methods, actions } = !isSimplyMethods(currentCreatedMethods)
+          ? currentCreatedMethods
+          : {
+              actions: {} as AT,
+              methods: currentCreatedMethods,
+            }
 
-      if (actions?.[action.type]) {
-        actions[action.type](...(action.payload || []))({
-          ...action,
-          dispatch: (value) =>
-            action.dispatch({
-              ...value,
-              dispatch: action.dispatch,
-            }),
-          payload: action.payload || [],
-          type: action.type,
-        })
-        return reducerState
-      }
-      if (!methods[action.type]) {
-        return reducerState
-      }
-      const newState = methods[action.type](...(action.payload || []))
-      return newState
-    },
+        if (actions?.[action.type]) {
+          actions[action.type](...(action.payload || []))({
+            ...action,
+            dispatch: (value, ...rest) => {
+              if (isInternalAction(value)) {
+                return action.dispatch(value)
+              }
+
+              return action.dispatch(value, ...rest)
+            },
+            payload: action.payload || [],
+            type: action.type,
+          })
+          return getState()
+        }
+        if (!methods[action.type]) {
+          return reducerState
+        }
+        const newState = methods[action.type](...(action.payload || []))
+        return newState
+      },
     [createMethods]
   )
 
@@ -222,7 +231,12 @@ function useMethods<
       m.actions[type] = (...payload) =>
         actions[type](...payload)({
           type,
-          dispatch,
+          dispatch: (value, ...rest) => {
+            if (isInternalAction(value)) {
+              return dispatch(value)
+            }
+            return dispatch(value, ...rest)
+          },
           payload,
         })
       // 如果有相同的 type actions 会覆盖 methods
@@ -238,7 +252,11 @@ function useMethods<
     if (effects && state && prevState) {
       Object.keys(effects).forEach((prop: keyof typeof effects) => {
         if (state[prop] !== prevState[prop]) {
-          effects[prop]?.(dispatch, state[prop], prevState[prop])
+          effects[prop]?.(
+            dispatch as DispatchFunction,
+            state[prop],
+            prevState[prop]
+          )
         }
       })
     }

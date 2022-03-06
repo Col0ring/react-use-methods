@@ -3,20 +3,24 @@ import { createMethodsContext, createUseMethods } from '@packages/index'
 import { combineReducers } from '@packages/reducer-mapper/immer'
 
 // 使用加入 immer
-const useMethods = createUseMethods({
-  reducerMapper: combineReducers,
-})
-// 也可加入所有的 redux中间件
-// import thunk from 'redux-thunk'
 // const useMethods = createUseMethods({
-//   reducerMapper: combineReducers
-// }, thunk)
+//   reducerMapper: combineReducers,
+// })
+// 也可加入所有的 redux中间件
+import thunk from 'redux-thunk'
+
+const useMethods = createUseMethods(
+  {
+    reducerMapper: combineReducers,
+  },
+  thunk
+)
 
 export interface MethodsState {
   count: number
 }
 
-const [useCountContext, CounterProvider, withCountProvider] =
+const [useCountContext, CounterProvider, , withCountProvider] =
   createMethodsContext(
     (state) => {
       return {
@@ -47,9 +51,21 @@ const [useCountContext, CounterProvider, withCountProvider] =
             return async ({ dispatch, payload }) => {
               // 可在这里使用诸如 redux-thunk 这样的中间件
               dispatch({
-                type: 'reset',
-                payload,
+                type: 'addAndReset',
               })
+            }
+          },
+          addAndReset() {
+            return ({ dispatch }) => {
+              const addAndReset = () => {
+                return (thunkDispatch: typeof dispatch) => {
+                  thunkDispatch({ type: 'increment' })
+                  // setTimeout(() => {
+                  //   thunkDispatch({ type: 'reset' })
+                  // }, 1000)
+                }
+              }
+              dispatch(addAndReset())
             }
           },
         },

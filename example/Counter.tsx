@@ -2,6 +2,11 @@ import React from 'react'
 import { useMethods } from '@packages/index'
 import { combineReducers } from '@packages/reducer-mapper/immer'
 
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
 interface MethodsState {
   count: number
 }
@@ -35,15 +40,30 @@ const Counter: React.FC = () => {
         },
         actions: {
           midReset() {
-            return async ({ dispatch }) => {
+            return async ({ dispatch, payload, type }) => {
               // 可在这里使用诸如 redux-thunk 这样的中间件
               setTimeout(() => {
                 dispatch({
                   type: 'set',
                   payload: [2],
-                  dispatch,
                 })
               }, 1000)
+            }
+          },
+          incrementAsync() {
+            return async ({ dispatch, payload, type }) => {
+              await wait(200)
+              dispatch({
+                type: 'incrementAsync2',
+              })
+            }
+          },
+          incrementAsync2() {
+            return async ({ dispatch, payload, type }) => {
+              await wait(200)
+              dispatch({
+                type: 'increment',
+              })
             }
           },
         },
@@ -75,6 +95,9 @@ const Counter: React.FC = () => {
       <button onClick={() => methods.set(10)}>set 10</button>
       <button onClick={() => methods.reset()}>reset</button>
       <button onClick={() => methods.actions.midReset()}>midReset</button>
+      <button onClick={() => methods.actions.incrementAsync()}>
+        incrementAsync
+      </button>
     </div>
   )
 }

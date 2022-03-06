@@ -31,10 +31,17 @@ const createUseReducer = <Action extends AnyAction, State>(
     // dispatch origin
     const dispatch = useCallback(
       <T extends Action>(action: T): T => {
+        const actionWithDispatch = { ...action, dispatch: dispatchRef.current }
         // 改变 state
-        ref.current = reducer(ref.current, action)
+        ref.current = reducer(
+          {
+            reducerState: ref.current,
+            getState: () => ref.current,
+          },
+          actionWithDispatch
+        )
         forceUpdate()
-        return action
+        return actionWithDispatch
       },
       [reducer, forceUpdate]
     )
@@ -61,7 +68,6 @@ const createUseReducer = <Action extends AnyAction, State>(
         dispatch
       )
     }, [dispatch])
-
     return [ref.current, dispatchRef.current]
   }
 }

@@ -13,3 +13,7 @@ export function resolvePromise<T>(value: T) {
     }
   })
 }
+
+export function isInternalAction(value: any) {
+  return typeof value === 'object' && value !== null && value.type
+}

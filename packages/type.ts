@@ -1,12 +1,19 @@
 export type Key = PropertyKey
 export type ResolvePromise<T> = T extends Promise<infer U> ? U : T
+export type Promisify<T> = T | Promise<T>
+
+export interface ReducerResult<S> {
+  state?: S
+  result?: any
+}
 
 export type Reducer<S, A extends AnyAction> = (
   prevState: { reducerState: S; getState: () => S },
   action: A & {
     dispatch: Dispatch<A>
   }
-) => S
+) => Promisify<ReducerResult<S>>
+
 export type ReducerState<R extends Reducer<any, any>> = R extends Reducer<
   infer S,
   any
@@ -27,7 +34,7 @@ export interface AnyAction {
 }
 
 export interface Dispatch<A extends AnyAction = AnyAction> {
-  <T extends A>(action: T): T
+  <T extends A>(action: T): Promisify<any>
 }
 export interface Store<Action extends AnyAction, State> {
   getState: () => State

@@ -54,9 +54,11 @@ const Counter: React.FC = () => {
           incrementAsync() {
             return async ({ dispatch, payload, type }) => {
               await wait(2000)
-              dispatch({
-                type: 'incrementAsync2',
-              })
+              console.log(
+                await dispatch({
+                  type: 'incrementAsync2',
+                })
+              )
             }
           },
           incrementAsync2() {
@@ -65,6 +67,7 @@ const Counter: React.FC = () => {
               dispatch({
                 type: 'increment',
               })
+              return 111
             }
           },
         },
@@ -88,6 +91,7 @@ const Counter: React.FC = () => {
       enableLoading: true,
     }
   )
+  console.log(actionLoading)
   return (
     <div>
       {count}

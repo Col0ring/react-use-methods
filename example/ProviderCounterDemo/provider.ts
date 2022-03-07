@@ -22,7 +22,6 @@ const [useCountContext, CounterProvider, , withCountProvider] =
         methods: {
           increment() {
             state.count += 1
-            console.log(state)
             // 这里可以不导出也不会报错，但是 ts 会报错
             return state
           },
@@ -45,6 +44,7 @@ const [useCountContext, CounterProvider, , withCountProvider] =
         actions: {
           midReset() {
             return async ({ dispatch, payload }) => {
+              await wait(500)
               // 可在这里使用诸如 redux-thunk 这样的中间件
               dispatch({
                 type: 'addAndReset',

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react'
-import { Key, Reducer, AnyAction, If } from '../type'
+import { Key, Reducer, AnyAction, If, Promisify } from '../type'
 import { isInternalAction } from '../utils'
 import { defaultUseReducer } from './createUseReducer'
 import usePrevious from './usePrevious'
@@ -7,8 +7,8 @@ import usePrevious from './usePrevious'
 // 外部 action
 type DispatchAction = Omit<AnyAction, 'dispatch'>
 
-declare function dispatchFunction(value: DispatchAction): void
-declare function dispatchFunction(value: any): void
+declare function dispatchFunction(value: DispatchAction): Promisify<any>
+declare function dispatchFunction(value: any): Promisify<any>
 
 type DispatchFunction = typeof dispatchFunction
 
@@ -30,7 +30,7 @@ type MethodTree<S, MT extends Record<Key, (...args: any[]) => any>> = {
 
 type ActionFunction<P extends any[] = any[]> = (
   ...args: P
-) => (action: MethodAction<P>) => Promise<void> | void
+) => (action: MethodAction<P>) => Promisify<any>
 
 type ActionTree<AT extends Record<Key, (...args: any[]) => any>> = {
   [K in keyof AT]: ActionFunction
@@ -220,8 +220,10 @@ function useMethods<
         if (enableLoading && action.type === loadingType) {
           const [type, status] = action.payload as [typeof loadingType, boolean]
           return {
-            ...reducerState,
-            actionLoading: { ...reducerState.actionLoading, [type]: status },
+            state: {
+              ...reducerState,
+              actionLoading: { ...reducerState.actionLoading, [type]: status },
+            },
           }
         }
 
@@ -243,21 +245,42 @@ function useMethods<
             payload: action.payload || [],
             type: action.type,
           })
-          const handleResult = async () => {
-            await res
+
+          if (res instanceof Promise) {
+            const handleResult = async () => {
+              const value = await res
+              enableLoading &&
+                action.dispatch({
+                  type: loadingType,
+                  payload: [action.type, false],
+                })
+              return {
+                result: value,
+              }
+            }
+
+            return handleResult()
+          }
+          enableLoading &&
             action.dispatch({
               type: loadingType,
               payload: [action.type, false],
             })
+          return {
+            state: getState(),
+            result: res,
           }
-          enableLoading && handleResult()
-          return getState()
         }
+
         if (!methods[action.type]) {
-          return reducerState
+          return {
+            state: reducerState,
+          }
         }
         const newState = methods[action.type](...(action.payload || []))
-        return newState
+        return {
+          state: newState,
+        }
       },
     [createMethods, enableLoading]
   )

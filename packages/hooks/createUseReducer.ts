@@ -8,6 +8,7 @@ import {
   Reducer,
   ReducerAction,
   ReducerState,
+  Promisify,
 } from '../type'
 
 // 合并中间件
@@ -39,18 +40,27 @@ const createUseReducer = <Action extends AnyAction, State>(
     const forceUpdate = useForceUpdate()
     // dispatch origin
     const dispatch = useCallback(
-      <T extends Action>(action: T): T => {
+      <T extends Action>(action: T): Promisify<any> => {
         const actionWithDispatch = { ...action, dispatch: dispatchRef.current }
         // 改变 state
-        ref.current = reducer(
+        const reducerResult = reducer(
           {
             reducerState: ref.current,
             getState: () => ref.current,
           },
           actionWithDispatch
         )
-        forceUpdate()
-        return actionWithDispatch
+        if (reducerResult instanceof Promise) {
+          return reducerResult.then(({ result }) => {
+            return result
+          })
+        }
+        const { state, result } = reducerResult
+        if (ref.current !== state) {
+          ref.current = state
+          forceUpdate()
+        }
+        return result
       },
       [reducer, forceUpdate]
     )

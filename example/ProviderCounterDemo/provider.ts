@@ -43,7 +43,7 @@ const [useCountContext, CounterProvider, , withCountProvider] =
         },
         actions: {
           midReset() {
-            return async ({ dispatch, payload }) => {
+            return async ({ dispatch }) => {
               await wait(500)
               // 可在这里使用诸如 redux-thunk 这样的中间件
               dispatch({

@@ -40,7 +40,7 @@ const Counter: React.FC = () => {
         },
         actions: {
           midReset() {
-            return async ({ dispatch, payload, type }) => {
+            return async ({ dispatch }) => {
               // 可在这里使用诸如 redux-thunk 这样的中间件
               setTimeout(() => {
                 dispatch({
@@ -52,7 +52,7 @@ const Counter: React.FC = () => {
             }
           },
           incrementAsync() {
-            return async ({ dispatch, payload, type }) => {
+            return async ({ dispatch }) => {
               await wait(2000)
               console.log(
                 await dispatch({
@@ -62,12 +62,12 @@ const Counter: React.FC = () => {
             }
           },
           incrementAsync2() {
-            return async ({ dispatch, payload, type }) => {
+            return async ({ dispatch }) => {
               await wait(2000)
               dispatch({
                 type: 'increment',
               })
-              return 111
+              return 'incrementAsync2 end'
             }
           },
         },

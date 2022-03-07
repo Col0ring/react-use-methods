@@ -45,15 +45,13 @@ type CreateMethodsReturn<
   | {
       methods: MT
       actions?: AT
-      effects?: Partial<
-        {
-          [P in keyof S]: (
-            dispatch: DispatchFunction,
-            newValue: S[P],
-            oldValue: S[P]
-          ) => void
-        }
-      >
+      effects?: Partial<{
+        [P in keyof S]: (
+          dispatch: DispatchFunction,
+          newValue: S[P],
+          oldValue: S[P]
+        ) => void
+      }>
     }
 
 type GetMethodTree<
@@ -175,15 +173,13 @@ function useMethods<
     )
     if (isSimplyMethods(methods)) {
       return {
-        effects: {} as Partial<
-          {
-            [P in keyof S]: (
-              dispatch: React.Dispatch<AnyAction>,
-              newValue: S[P],
-              oldValue: S[P]
-            ) => void
-          }
-        >,
+        effects: {} as Partial<{
+          [P in keyof S]: (
+            dispatch: React.Dispatch<AnyAction>,
+            newValue: S[P],
+            oldValue: S[P]
+          ) => void
+        }>,
         actions: {} as AT,
         methods,
       }

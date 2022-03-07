@@ -68,12 +68,7 @@ describe('hook factory createUseMethods', () => {
     })
 
     it('should apply useMethods options when the first parameter is an object', async () => {
-      const useMethods = createUseMethods(
-        {
-          reducerMapper: combineReducers,
-        },
-        thunk
-      )
+      const useMethods = createUseMethods(thunk)
       const { result } = renderHook(() =>
         useMethods(
           (state) => ({
@@ -104,7 +99,10 @@ describe('hook factory createUseMethods', () => {
               },
             },
           }),
-          initialState
+          initialState,
+          {
+            reducerMapper: combineReducers,
+          }
         )
       )
       act(() => {

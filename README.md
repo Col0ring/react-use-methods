@@ -24,8 +24,14 @@ Just like [`react-use/useMethods`](https://github.com/streamich/react-use/blob/m
 import React from 'react'
 import { useMethods } from 'react-use-methods'
 
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
 function App() {
-  const [{ count }, methods] = useMethods(
+  const [{ count, actionLoading }, methods] = useMethods(
     (state) => {
       return {
         methods: {
@@ -61,17 +67,40 @@ function App() {
               }, 1000)
             }
           },
+          incrementAsync() {
+            return async ({ dispatch }) => {
+              await wait(2000)
+              console.log(
+                await dispatch({
+                  type: 'incrementAsync2',
+                })
+              ) // incrementAsync2 end
+            }
+          },
+          incrementAsync2() {
+            return async ({ dispatch }) => {
+              await wait(2000)
+              dispatch({
+                type: 'increment',
+              })
+              return 'incrementAsync2 end'
+            }
+          },
         },
       }
     },
     {
       count: 0,
+    },
+    {
+      enableLoading: true,
     }
   )
   // methods contains all functions in methods and actions and combines them
   return (
     <div>
       {count}
+      {JSON.stringify(actionLoading)}
       <button onClick={methods.methods.increment}>increment</button>
       <button onClick={methods.incrementDouble}>incrementDouble</button>
       <button onClick={methods.decrement}>decrement</button>
@@ -90,8 +119,8 @@ import React from 'react'
 import { useMethods } from 'react-use-methods'
 
 function App() {
-  const [{ count }, methods] = useMethods(
-    (state) => {
+  const [{ count, actionLoading }, methods] = useMethods(
+    (state, getState) => {
       return {
         methods: {
           increment() {
@@ -110,23 +139,9 @@ function App() {
             return { ...state, count: 0 }
           },
         },
-        actions: {
-          midReset(...args) {
-            // return a function and dispatch custom action
-            return ({ type, dispatch, payload }) => {
-              console.log(type) // midReset
-              console.log(dispatch) // the dispatch of useReducer
-              console.log(payload) // args
-              // custom action here
-              dispatch({
-                type: 'reset',
-                payload,
-              })
-            }
-          },
-        },
         effects: {
           count(dispatch, newValue, oldValue) {
+            console.log(state, getState())
             console.log(newValue, oldValue)
             if (newValue < 0) {
               dispatch({
@@ -139,17 +154,20 @@ function App() {
     },
     {
       count: 0,
+    },
+    {
+      enableLoading: true,
     }
   )
   return (
     <div>
       {count}
+      {JSON.stringify(actionLoading)}
       <button onClick={methods.increment}>increment</button>
       <button onClick={methods.incrementDouble}>incrementDouble</button>
       <button onClick={methods.decrement}>decrement</button>
       <button onClick={() => methods.set(10)}>set 10</button>
       <button onClick={() => methods.reset()}>reset</button>
-      <button onClick={() => methods.midReset()}>midReset</button>
     </div>
   )
 }
@@ -174,14 +192,20 @@ const [state, methods] = useMethods(
   ```ts
   import { useReducer, Reducer } from 'react'
 
-  interface UseMethodsOptions<S, A> {
+  interface UseMethodsOptions<
+    S,
+    A extends AnyAction,
+    L extends boolean = false
+  > {
     reducerMapper?: (reducer: Reducer<S, A>) => Reducer<S, A>
     customUseReducer?: typeof useReducer
+    enableLoading?: L
   }
   ```
 
   - reducerMapper: an interface for user to change the native reducer of useMethods (like immer).
-  - customUseReducer: a custom hook like `React.useReducer`, you can create it by `createUseReducer`( not recommended to use it directly, it should be generated in createUseMethods ).
+  - customUseReducer: a custom hook like `React.useReducer`, and given the second parameter to get the state asynchronously, you can create it by `createUseReducer`( not recommended to use it directly, it should be generated in createUseMethods ).
+  - enableLoading: inject the `actionLoading` property into the state，to get the loading state of the action.
 
 ### createUseReducer
 
@@ -198,13 +222,7 @@ import thunk from 'redux-thunk'
 import { createUseMethods } from 'react-use-methods'
 // make sure immer has been installed
 import { combineReducers } from 'react-use-methods/reducer-mapper/es/immer'
-const useMethods = createUseMethods(
-  {
-    // use immer
-    reducerMapper: combineReducers,
-  },
-  thunk
-)
+const useMethods = createUseMethods(thunk)
 
 function App() {
   const [{ count }, methods] = useMethods(
@@ -258,12 +276,9 @@ function App() {
 #### Reference
 
 ```js
-const useMethods = createUseMethods(useMethodsOptions, ...middlewares)
-// or
 const useMethods = createUseMethods(...middlewares)
 ```
 
-- `useMethodsOptions`: same as useMethods.
 - `middlewares`: custom middlewares for dispatch actions, like redux-thunk.
 
 ### createUseMethodsContext
@@ -277,10 +292,6 @@ A state management factory function that allows all components in the provider t
 import { createMethodsContext, createUseMethods } from 'react-use-methods'
 // make sure immer has been installed
 import { combineReducers } from 'react-use-methods/reducer-mapper/es/immer'
-
-const useMethods = createUseMethods({
-  reducerMapper: combineReducers,
-})
 
 const [useCountContext, CounterProvider, withCountProvider, connect] =
   createMethodsContext(
@@ -309,7 +320,9 @@ const [useCountContext, CounterProvider, withCountProvider, connect] =
     {
       count: 0,
     },
-    useMethods
+    {
+      reducerMapper: combineReducers,
+    }
   )
 
 export { useCountContext, CounterProvider, withCountProvider, connect }
@@ -480,6 +493,7 @@ const [
 ] = createUseMethodsContext(
   createMethods,
   defaultInitialValue,
+  useMethodsOptions,
   customUseMethods
 )
 ```

@@ -59,6 +59,7 @@ const Counter: React.FC = () => {
                   type: 'incrementAsync2',
                 })
               )
+              return 'incrementAsync'
             }
           },
           incrementAsync2() {
@@ -102,7 +103,11 @@ const Counter: React.FC = () => {
       <button onClick={() => methods.set(10)}>set 10</button>
       <button onClick={() => methods.reset()}>reset</button>
       <button onClick={() => methods.actions.midReset()}>midReset</button>
-      <button onClick={() => methods.actions.incrementAsync()}>
+      <button
+        onClick={async () => {
+          console.log(await methods.actions.incrementAsync())
+        }}
+      >
         incrementAsync
       </button>
     </div>

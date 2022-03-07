@@ -102,10 +102,12 @@ type WrappedMethods<
     [K in keyof MT]: (...payload: Parameters<MT[K]>) => void
   }
   actions: {
-    [K in keyof AT]: (...payload: Parameters<AT[K]>) => void
+    [K in keyof AT]: (...payload: Parameters<AT[K]>) => Promisify<any>
   }
 } & {
-  [K in keyof (MT & AT)]: (...payload: Parameters<(MT & AT)[K]>) => void
+  [K in keyof MT]: (...payload: Parameters<MT[K]>) => void
+} & {
+  [K in keyof AT]: (...payload: Parameters<AT[K]>) => Promisify<any>
 }
 
 interface UseMethodsOptions<S, A extends AnyAction, L extends boolean = false> {

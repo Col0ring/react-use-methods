@@ -115,6 +115,108 @@ describe('hooks useMethods', () => {
     expect(result.current[0].count).toBe(count)
   })
 
+  it('should return loading state when set enableLoading true', async () => {
+    const { result } = renderHook(() =>
+      useMethods(
+        (state) => ({
+          methods: {
+            reset() {
+              return { ...state, ...initialState }
+            },
+            decrement() {
+              return { ...state, count: state.count - 1 }
+            },
+            increment() {
+              return { ...state, count: state.count + 1 }
+            },
+          },
+          actions: {
+            midReset() {
+              return async ({ dispatch }) => {
+                setTimeout(() => {
+                  dispatch({
+                    type: 'reset',
+                  })
+                }, 1000)
+              }
+            },
+          },
+        }),
+        initialState,
+        {
+          enableLoading: true,
+        }
+      )
+    )
+
+    expect(result.current[0].actionLoading).toEqual({
+      midReset: false,
+    })
+  })
+
+  it('should properly update the loading state based on the createMethods', async () => {
+    await act(async () => {
+      function wait(ms: number) {
+        return new Promise((resolve) => {
+          setTimeout(resolve, ms)
+        })
+      }
+      const { result } = renderHook(() =>
+        useMethods(
+          (state) => ({
+            methods: {
+              reset() {
+                return { ...state, ...initialState }
+              },
+              decrement() {
+                return { ...state, count: state.count - 1 }
+              },
+              increment() {
+                return { ...state, count: state.count + 1 }
+              },
+            },
+            actions: {
+              midReset() {
+                return async ({ dispatch }) => {
+                  await wait(200)
+                  setTimeout(() => {
+                    dispatch({
+                      type: 'reset',
+                    })
+                  }, 1000)
+                }
+              },
+            },
+          }),
+          initialState,
+          {
+            enableLoading: true,
+          }
+        )
+      )
+
+      expect(result.current[0].actionLoading).toEqual({
+        midReset: false,
+      })
+      let res: any
+      await act(async () => {
+        res = result.current[1].midReset()
+      })
+
+      expect(result.current[0].actionLoading).toEqual({
+        midReset: true,
+      })
+
+      act(() => {
+        jest.runAllTimers()
+      })
+      await res
+      expect(result.current[0].actionLoading).toEqual({
+        midReset: false,
+      })
+    })
+  })
+
   it('should have effects for value changed', async () => {
     const count = 10
     const { result } = renderHook(() =>

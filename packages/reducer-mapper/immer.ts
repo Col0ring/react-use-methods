@@ -1,23 +1,9 @@
 import { produce, Draft } from 'immer'
-export function combineReducers<State, Action>(
-  reducer: (
-    state: {
-      reducerState: State
-      getState: () => State
-    },
-    action: Action
-  ) => State
-) {
-  return (
-    {
-      reducerState,
-      getState,
-    }: {
-      reducerState: State
-      getState: () => State
-    },
-    action: Action
-  ) => {
+import type { Reducer, AnyAction } from '../type'
+export function combineReducers<State, Action extends AnyAction>(
+  reducer: Reducer<State, Action>
+): Reducer<State, Action> {
+  return ({ reducerState, getState }, action) => {
     return produce(reducerState, (draft) => {
       return reducer(
         {

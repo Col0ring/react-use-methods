@@ -1,6 +1,14 @@
 import { MutableRefObject, useCallback, useEffect, useRef } from 'react'
 import useForceUpdate from './useForceUpdate'
-import { AnyAction, Middleware, Store, Dispatch } from '../type'
+import {
+  AnyAction,
+  Middleware,
+  Store,
+  Dispatch,
+  Reducer,
+  ReducerAction,
+  ReducerState,
+} from '../type'
 
 // 合并中间件
 function composeMiddleware<Action extends AnyAction, State>(
@@ -18,14 +26,15 @@ const createUseReducer = <Action extends AnyAction, State>(
   ...middlewares: Middleware<Action, State>[]
 ) => {
   // 已经合并后的中间件
-  const composedMiddleware = composeMiddleware<Action, State>(middlewares)
+  const composedMiddleware = composeMiddleware(middlewares)
 
   // useReducer
-  return function useReducer(
-    reducer: (state: State, action: Action) => State,
-    initialState: State,
-    initializer = (value: State) => value
-  ): [State, Dispatch<Action>] {
+  return function useReducer<R extends Reducer<any, any>, I>(
+    reducer: R,
+    initialState: I,
+    initializer: (arg: I) => ReducerState<R> = (value) =>
+      value as ReducerState<R>
+  ): [ReducerState<R>, Dispatch<ReducerAction<R>>, () => ReducerState<R>] {
     const ref = useRef(initializer(initialState))
     const forceUpdate = useForceUpdate()
     // dispatch origin
@@ -58,6 +67,8 @@ const createUseReducer = <Action extends AnyAction, State>(
       )
     )
 
+    const getAsyncState = useCallback(() => ref.current, [])
+
     useEffect(() => {
       // dispatch 更新时改变 dispatchRef
       dispatchRef.current = composedMiddleware(
@@ -68,7 +79,10 @@ const createUseReducer = <Action extends AnyAction, State>(
         dispatch
       )
     }, [dispatch])
-    return [ref.current, dispatchRef.current]
+    return [ref.current, dispatchRef.current, getAsyncState]
   }
 }
+
+export const defaultUseReducer = createUseReducer()
+
 export default createUseReducer

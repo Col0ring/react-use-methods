@@ -6,6 +6,7 @@ const Counter: React.FC = () => {
   return (
     <div>
       {state.count}
+      {JSON.stringify(state.actionLoading)}
       <button onClick={methods.increment}>increment</button>
       <button onClick={methods.incrementDouble}>incrementDouble</button>
       <button onClick={methods.decrement}>decrement</button>

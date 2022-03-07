@@ -2,19 +2,14 @@ import { createMethodsContext, createUseMethods } from '@packages/index'
 // make sure immer has been installed
 import { combineReducers } from '@packages/reducer-mapper/immer'
 
-// 使用加入 immer
-// const useMethods = createUseMethods({
-//   reducerMapper: combineReducers,
-// })
-// 也可加入所有的 redux中间件
 import thunk from 'redux-thunk'
 
-const useMethods = createUseMethods(
-  {
-    reducerMapper: combineReducers,
-  },
-  thunk
-)
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+const useMethods = createUseMethods(thunk)
 
 export interface MethodsState {
   count: number
@@ -27,6 +22,7 @@ const [useCountContext, CounterProvider, , withCountProvider] =
         methods: {
           increment() {
             state.count += 1
+            console.log(state)
             // 这里可以不导出也不会报错，但是 ts 会报错
             return state
           },
@@ -56,13 +52,13 @@ const [useCountContext, CounterProvider, , withCountProvider] =
             }
           },
           addAndReset() {
-            return ({ dispatch }) => {
+            return async ({ dispatch }) => {
               const addAndReset = () => {
-                return (thunkDispatch: typeof dispatch) => {
+                return async (thunkDispatch: typeof dispatch) => {
                   thunkDispatch({ type: 'increment' })
-                  // setTimeout(() => {
-                  //   thunkDispatch({ type: 'reset' })
-                  // }, 1000)
+                  setTimeout(() => {
+                    thunkDispatch({ type: 'reset' })
+                  }, 1000)
                 }
               }
               dispatch(addAndReset())
@@ -74,6 +70,10 @@ const [useCountContext, CounterProvider, , withCountProvider] =
     {
       count: 0,
     } as MethodsState,
+    {
+      reducerMapper: combineReducers,
+      enableLoading: true,
+    },
     useMethods
   )
 

@@ -12,7 +12,7 @@ interface MethodsState {
 }
 
 const Counter: React.FC = () => {
-  const [{ count }, methods] = useMethods(
+  const [{ count, actionLoading }, methods] = useMethods(
     (state) => {
       return {
         methods: {
@@ -48,11 +48,12 @@ const Counter: React.FC = () => {
                   payload: [2],
                 })
               }, 1000)
+              await wait(2000)
             }
           },
           incrementAsync() {
             return async ({ dispatch, payload, type }) => {
-              await wait(200)
+              await wait(2000)
               dispatch({
                 type: 'incrementAsync2',
               })
@@ -60,7 +61,7 @@ const Counter: React.FC = () => {
           },
           incrementAsync2() {
             return async ({ dispatch, payload, type }) => {
-              await wait(200)
+              await wait(2000)
               dispatch({
                 type: 'increment',
               })
@@ -84,11 +85,13 @@ const Counter: React.FC = () => {
     } as MethodsState,
     {
       reducerMapper: combineReducers,
+      enableLoading: true,
     }
   )
   return (
     <div>
       {count}
+      {JSON.stringify(actionLoading)}
       <button onClick={methods.methods.increment}>increment</button>
       <button onClick={methods.incrementDouble}>incrementDouble</button>
       <button onClick={methods.decrement}>decrement</button>

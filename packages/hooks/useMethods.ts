@@ -1,19 +1,11 @@
-import React, { Reducer, useEffect, useMemo, useReducer } from 'react'
-import { Key } from '../type'
+import React, { useEffect, useMemo } from 'react'
+import { Key, Reducer, AnyAction, If } from '../type'
 import { isInternalAction } from '../utils'
-import createUseReducer from './createUseReducer'
+import { defaultUseReducer } from './createUseReducer'
 import usePrevious from './usePrevious'
 
-interface Action {
-  type: Key
-  // 内部 dispatch。需要带上 dispatch 参数
-  dispatch: React.Dispatch<Action>
-  payload?: any[]
-  [props: string]: any
-}
-
 // 外部 action
-type DispatchAction = Omit<Action, 'dispatch'>
+type DispatchAction = Omit<AnyAction, 'dispatch'>
 
 declare function dispatchFunction(value: DispatchAction): void
 declare function dispatchFunction(value: any): void
@@ -38,7 +30,7 @@ type MethodTree<S, MT extends Record<Key, (...args: any[]) => any>> = {
 
 type ActionFunction<P extends any[] = any[]> = (
   ...args: P
-) => (action: MethodAction<P>) => void
+) => (action: MethodAction<P>) => Promise<void> | void
 
 type ActionTree<AT extends Record<Key, (...args: any[]) => any>> = {
   [K in keyof AT]: ActionFunction
@@ -53,13 +45,15 @@ type CreateMethodsReturn<
   | {
       methods: MT
       actions?: AT
-      effects?: Partial<{
-        [P in keyof S]: (
-          dispatch: DispatchFunction,
-          newValue: S[P],
-          oldValue: S[P]
-        ) => void
-      }>
+      effects?: Partial<
+        {
+          [P in keyof S]: (
+            dispatch: DispatchFunction,
+            newValue: S[P],
+            oldValue: S[P]
+          ) => void
+        }
+      >
     }
 
 type GetMethodTree<
@@ -100,7 +94,7 @@ type CreateMethods<
   AT extends ActionTree<Record<Key, (...args: any[]) => any>> = ActionTree<
     Record<Key, (...args: any[]) => any>
   >
-> = (state: S) => CreateMethodsReturn<S, MT, AT>
+> = (state: S, getState: () => S) => CreateMethodsReturn<S, MT, AT>
 
 type WrappedMethods<
   MT extends MethodTree<Record<Key, any>, Record<Key, (...args: any[]) => any>>,
@@ -116,9 +110,10 @@ type WrappedMethods<
   [K in keyof (MT & AT)]: (...payload: Parameters<(MT & AT)[K]>) => void
 }
 
-interface UseMethodsOptions<S, A> {
+interface UseMethodsOptions<S, A extends AnyAction, L extends boolean = false> {
+  enableLoading?: L
   reducerMapper?: (reducer: Reducer<S, A>) => Reducer<S, A>
-  customUseReducer?: typeof useReducer
+  customUseReducer?: typeof defaultUseReducer
 }
 
 function isSimplyMethods<S extends Record<Key, any>>(
@@ -126,45 +121,94 @@ function isSimplyMethods<S extends Record<Key, any>>(
 ): val is MethodTree<S, Record<Key, (...args: any[]) => any>> {
   return !val.methods
 }
-const defaultUseReducer = createUseReducer()
+
+const loadingType = Symbol('actionLoading')
+
 function useMethods<
   S extends Record<Key, any>,
-  CM extends CreateMethods<S>,
+  CM extends CreateMethods<
+    If<
+      L,
+      S & {
+        actionLoading: {
+          [key: Key]: boolean
+        }
+      },
+      S
+    >
+  >,
   MT extends GetMethodTree<ReturnType<CM>>,
-  AT extends GetActionTree<ReturnType<CM>>
+  AT extends GetActionTree<ReturnType<CM>>,
+  L extends boolean,
+  RS extends If<
+    L,
+    S & {
+      actionLoading: {
+        [K in keyof AT]: boolean
+      }
+    },
+    S
+  >
 >(
   createMethods: CM,
   initialState: S,
-  useMethodsOptions?: UseMethodsOptions<S, Action>
-): [S, WrappedMethods<MT, AT>] {
+  useMethodsOptions?: UseMethodsOptions<RS, AnyAction, L>
+): [RS, WrappedMethods<MT, AT>] {
   const {
-    customUseReducer = defaultUseReducer as typeof useReducer,
-    reducerMapper = (v: Reducer<S, Action>) => v,
+    enableLoading = false,
+    customUseReducer = defaultUseReducer,
+    reducerMapper = (v: Reducer<RS, AnyAction>) => v,
   } = useMethodsOptions || {}
 
   const createdMethods = useMemo(() => {
-    const methods = createMethods(initialState)
+    const methods = createMethods(
+      enableLoading
+        ? { ...initialState, actionLoading: {} }
+        : (initialState as RS),
+      () =>
+        enableLoading
+          ? {
+              ...initialState,
+              actionLoading: {},
+            }
+          : (initialState as RS)
+    )
     if (isSimplyMethods(methods)) {
       return {
-        effects: {} as Partial<{
-          [P in keyof S]: (
-            dispatch: React.Dispatch<Action>,
-            newValue: S[P],
-            oldValue: S[P]
-          ) => void
-        }>,
+        effects: {} as Partial<
+          {
+            [P in keyof S]: (
+              dispatch: React.Dispatch<AnyAction>,
+              newValue: S[P],
+              oldValue: S[P]
+            ) => void
+          }
+        >,
         actions: {} as AT,
         methods,
       }
     }
     return methods
-  }, [createMethods, initialState])
+  }, [createMethods, enableLoading, initialState])
+
+  // action loading state
+  const initialLoadingState = useMemo(() => {
+    return Object.keys(createdMethods.actions || {}).reduce(
+      (prev, next) => {
+        prev[next as keyof AT] = false
+        return prev
+      },
+      {} as {
+        [K in keyof AT]: boolean
+      }
+    )
+  }, [createdMethods.actions])
 
   // reducer 每次都运行 createMethods 拿到并传入最新的状态
-  const reducer: Reducer<S, Action> = useMemo(
+  const reducer: Reducer<RS, AnyAction> = useMemo(
     () =>
       ({ reducerState, getState }, action) => {
-        const currentCreatedMethods = createMethods(reducerState)
+        const currentCreatedMethods = createMethods(reducerState, getState)
 
         const { methods, actions } = !isSimplyMethods(currentCreatedMethods)
           ? currentCreatedMethods
@@ -173,8 +217,21 @@ function useMethods<
               methods: currentCreatedMethods,
             }
 
+        if (enableLoading && action.type === loadingType) {
+          const [type, status] = action.payload as [typeof loadingType, boolean]
+          return {
+            ...reducerState,
+            actionLoading: { ...reducerState.actionLoading, [type]: status },
+          }
+        }
+
         if (actions?.[action.type]) {
-          actions[action.type](...(action.payload || []))({
+          enableLoading &&
+            action.dispatch({
+              type: loadingType,
+              payload: [action.type, true],
+            })
+          const res = actions[action.type](...(action.payload || []))({
             ...action,
             dispatch: (value, ...rest) => {
               if (isInternalAction(value)) {
@@ -186,6 +243,14 @@ function useMethods<
             payload: action.payload || [],
             type: action.type,
           })
+          const handleResult = async () => {
+            await res
+            action.dispatch({
+              type: loadingType,
+              payload: [action.type, false],
+            })
+          }
+          enableLoading && handleResult()
           return getState()
         }
         if (!methods[action.type]) {
@@ -194,12 +259,21 @@ function useMethods<
         const newState = methods[action.type](...(action.payload || []))
         return newState
       },
-    [createMethods]
+    [createMethods, enableLoading]
   )
 
-  const [state, dispatch] = customUseReducer(
+  const [state, dispatch, getAsyncState] = customUseReducer(
     reducerMapper(reducer),
-    initialState
+    initialState,
+    (arg) => {
+      if (enableLoading) {
+        return {
+          ...arg,
+          actionLoading: initialLoadingState,
+        }
+      }
+      return arg
+    }
   )
 
   const prevState = usePrevious(state)
@@ -222,14 +296,20 @@ function useMethods<
 
     // 重新生成 methods
     methodsTypes.reduce((m, type: keyof MT) => {
-      m.methods[type] = (...payload) => dispatch({ type, dispatch, payload })
+      m.methods[type] = (...payload) => dispatch({ type, payload })
       m[type] = m.methods[type] as WrappedMethods<MT, AT>[keyof MT]
       return m
     }, currentWrappedMethods)
 
     actionsTypes.reduce((m, type: keyof AT) => {
-      m.actions[type] = (...payload) =>
-        actions[type](...payload)({
+      m.actions[type] = (...payload) => {
+        enableLoading &&
+          dispatch({
+            type: loadingType,
+            // set actionLoading state
+            payload: [type, true],
+          })
+        const res = actions[type](...payload)({
           type,
           dispatch: (value, ...rest) => {
             if (isInternalAction(value)) {
@@ -239,34 +319,46 @@ function useMethods<
           },
           payload,
         })
+        const handleResult = async () => {
+          await res
+          dispatch({
+            type: loadingType,
+            dispatch,
+            payload: [type, false],
+          })
+        }
+        enableLoading && handleResult()
+
+        return res
+      }
       // 如果有相同的 type actions 会覆盖 methods
       m[type] = m.actions[type] as WrappedMethods<MT, AT>[keyof AT]
       return m
     }, currentWrappedMethods)
 
     return currentWrappedMethods
-  }, [createdMethods, dispatch])
+  }, [createdMethods, dispatch, enableLoading])
 
   useEffect(() => {
-    const { effects } = createdMethods
+    const currentCreatedMethods = createMethods(state, getAsyncState)
+    if (isSimplyMethods(currentCreatedMethods)) {
+      return
+    }
+    const { effects } = currentCreatedMethods
+
     if (effects && state && prevState) {
       Object.keys(effects).forEach((prop: keyof typeof effects) => {
         if (state[prop] !== prevState[prop]) {
-          effects[prop]?.(
-            dispatch as DispatchFunction,
-            state[prop],
-            prevState[prop]
-          )
+          effects[prop]?.(dispatch, state[prop], prevState[prop])
         }
       })
     }
-  }, [state, dispatch, prevState, createdMethods])
+  }, [state, dispatch, prevState, createMethods, getAsyncState])
 
   return [state, wrappedMethods]
 }
 
 export type {
-  Action,
   MethodAction,
   ActionFunction,
   ActionTree,

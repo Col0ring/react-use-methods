@@ -6,8 +6,9 @@ import useMethods, {
   GetMethodTree,
   ActionTree,
   GetActionTree,
+  UseMethodsOptions,
 } from './useMethods'
-import { Key } from '../type'
+import { AnyAction, If, Key } from '../type'
 
 type MethodsContextValue<
   S,
@@ -16,19 +17,39 @@ type MethodsContextValue<
 > = [S, WrappedMethods<MT, AT>]
 
 const createMethodsContext = <
-  // eslint-disable-next-line @typescript-eslint/ban-types
   S extends Record<Key, any>,
-  CM extends CreateMethods<S>,
+  CM extends CreateMethods<
+    If<
+      L,
+      S & {
+        actionLoading: {
+          [key: Key]: boolean
+        }
+      },
+      S
+    >
+  >,
   MT extends GetMethodTree<ReturnType<CM>>,
-  AT extends GetActionTree<ReturnType<CM>>
+  AT extends GetActionTree<ReturnType<CM>>,
+  L extends boolean,
+  RS extends If<
+    L,
+    S & {
+      actionLoading: {
+        [K in keyof AT]: boolean
+      }
+    },
+    S
+  >
 >(
   createMethods: CM,
   defaultInitialValue: S,
+  useMethodsOptions?: UseMethodsOptions<RS, AnyAction, L>,
   customUseMethods?: typeof useMethods
 ) => {
-  const context = createContext<MethodsContextValue<S, MT, AT> | null>(null)
+  const context = createContext<MethodsContextValue<RS, MT, AT> | null>(null)
   const providerFactory = (
-    props: React.ProviderProps<MethodsContextValue<S, MT, AT>>,
+    props: React.ProviderProps<MethodsContextValue<RS, MT, AT>>,
     children: Parameters<typeof createElement>[2]
   ) => createElement(context.Provider, props, children)
 
@@ -38,7 +59,8 @@ const createMethodsContext = <
   }) => {
     const stateAndMethods = (customUseMethods || useMethods)(
       createMethods,
-      initialValue !== undefined ? initialValue : defaultInitialValue
+      initialValue !== undefined ? initialValue : defaultInitialValue,
+      useMethodsOptions
     )
 
     const memoContext = useMemo(
@@ -65,10 +87,10 @@ const createMethodsContext = <
   const connect = <P>(WrapperComponent: React.ElementType<P>) => {
     return function <
       M = {
-        state: S
+        state: RS
         methods: WrappedMethods<MT, AT>
       }
-    >(mapper?: (state: S, methods: WrappedMethods<MT, AT>) => M) {
+    >(mapper?: (state: RS, methods: WrappedMethods<MT, AT>) => M) {
       return function ContextWrapper(props) {
         const [state, methods] = useMethodsContext()
         const mapperProps = useMemo(

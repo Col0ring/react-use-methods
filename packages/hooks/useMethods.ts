@@ -45,13 +45,15 @@ type CreateMethodsReturn<
   | {
       methods: MT
       actions?: AT
-      effects?: Partial<{
-        [P in keyof S]: (
-          dispatch: DispatchFunction,
-          newValue: S[P],
-          oldValue: S[P]
-        ) => void
-      }>
+      effects?: Partial<
+        {
+          [P in keyof S]: (
+            dispatch: DispatchFunction,
+            newValue: S[P],
+            oldValue: S[P]
+          ) => void
+        }
+      >
     }
 
 type GetMethodTree<
@@ -96,19 +98,20 @@ type CreateMethods<
 
 type WrappedMethods<
   MT extends MethodTree<Record<Key, any>, Record<Key, (...args: any[]) => any>>,
-  AT extends ActionTree<Record<Key, (...args: any[]) => any>>
+  AT extends ActionTree<Record<Key, (...args: any[]) => any>>,
+  M = {
+    [K in keyof MT]: (...payload: Parameters<MT[K]>) => ReturnType<MT[K]>
+  },
+  A = {
+    [K in keyof AT]: (
+      ...payload: Parameters<AT[K]>
+    ) => ReturnType<ReturnType<AT[K]>>
+  }
 > = {
-  methods: {
-    [K in keyof MT]: (...payload: Parameters<MT[K]>) => void
-  }
-  actions: {
-    [K in keyof AT]: (...payload: Parameters<AT[K]>) => Promisify<any>
-  }
-} & {
-  [K in keyof MT]: (...payload: Parameters<MT[K]>) => void
-} & {
-  [K in keyof AT]: (...payload: Parameters<AT[K]>) => Promisify<any>
-}
+  methods: M
+  actions: A
+} & M &
+  A
 
 interface UseMethodsOptions<S, A extends AnyAction, L extends boolean = false> {
   enableLoading?: L
@@ -175,13 +178,15 @@ function useMethods<
     )
     if (isSimplyMethods(methods)) {
       return {
-        effects: {} as Partial<{
-          [P in keyof S]: (
-            dispatch: React.Dispatch<AnyAction>,
-            newValue: S[P],
-            oldValue: S[P]
-          ) => void
-        }>,
+        effects: {} as Partial<
+          {
+            [P in keyof S]: (
+              dispatch: React.Dispatch<AnyAction>,
+              newValue: S[P],
+              oldValue: S[P]
+            ) => void
+          }
+        >,
         actions: {} as AT,
         methods,
       }
@@ -278,6 +283,7 @@ function useMethods<
         const newState = methods[action.type](...(action.payload || []))
         return {
           state: newState,
+          result: newState,
         }
       },
     [createMethods, enableLoading]

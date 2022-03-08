@@ -97,7 +97,13 @@ const Counter: React.FC = () => {
     <div>
       {count}
       {JSON.stringify(actionLoading)}
-      <button onClick={methods.methods.increment}>increment</button>
+      <button
+        onClick={() => {
+          console.log(methods.methods.increment())
+        }}
+      >
+        increment
+      </button>
       <button onClick={methods.incrementDouble}>incrementDouble</button>
       <button onClick={methods.decrement}>decrement</button>
       <button onClick={() => methods.set(10)}>set 10</button>
@@ -105,7 +111,7 @@ const Counter: React.FC = () => {
       <button onClick={() => methods.actions.midReset()}>midReset</button>
       <button
         onClick={async () => {
-          console.log(await methods.actions.incrementAsync())
+          console.log(methods.actions.incrementAsync())
         }}
       >
         incrementAsync

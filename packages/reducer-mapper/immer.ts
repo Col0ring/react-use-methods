@@ -5,6 +5,7 @@ export function combineReducers<State, Action extends AnyAction>(
 ): Reducer<State, Action> {
   return ({ reducerState, getState }, action) => {
     let result: any
+    let isState = false
     let promiseReducerResult: Promise<ReducerResult<State>> | undefined
     let newState = produce(reducerState, (draft) => {
       const reducerResult = reducer(
@@ -19,6 +20,9 @@ export function combineReducers<State, Action extends AnyAction>(
         return
       }
       result = reducerResult.result
+      if (result === reducerResult.state) {
+        isState = true
+      }
       return reducerResult.state
     })
 
@@ -32,7 +36,7 @@ export function combineReducers<State, Action extends AnyAction>(
 
     return {
       state: newState,
-      result,
+      result: isState ? newState : result,
     }
   }
 }

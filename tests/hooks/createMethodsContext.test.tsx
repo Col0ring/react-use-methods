@@ -98,7 +98,9 @@ describe('hook factory createMethodsContext', () => {
       const { result } = setUp()
       const [, sharedNumberMethods] = result.current
 
-      act(() => sharedNumberMethods.increment())
+      act(() => {
+        sharedNumberMethods.increment()
+      })
 
       const [{ sharedNumber }] = result.current
 

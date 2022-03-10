@@ -9,7 +9,13 @@ function wait(ms: number) {
     setTimeout(resolve, ms)
   })
 }
-const useMethods = createUseMethods(thunk)
+const useMethods = createUseMethods(
+  {
+    reducerMapper: combineReducers,
+    enableLoading: true,
+  },
+  thunk
+)
 
 export interface MethodsState {
   count: number

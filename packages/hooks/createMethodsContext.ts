@@ -8,7 +8,8 @@ import useMethods, {
   GetActionTree,
   UseMethodsOptions,
 } from './useMethods'
-import { AnyAction, If, Key } from '../type'
+import { AnyAction, If, IfBoolean, Key } from '../type'
+import { CreateUseMethodsReturn } from './createUseMethods'
 
 type MethodsContextValue<
   S,
@@ -16,11 +17,43 @@ type MethodsContextValue<
   AT extends ActionTree<Record<Key, (...args: any[]) => any>>
 > = [S, WrappedMethods<MT, AT>]
 
-const createMethodsContext = <
+type GetLoadingState<T extends CreateUseMethodsReturn<boolean>> =
+  T extends CreateUseMethodsReturn<infer L> ? IfBoolean<L, false, L> : never
+
+type CreateMethodsContextReturn<
+  S,
+  RS,
+  MT extends MethodTree<RS, Record<Key, (...args: any[]) => any>>,
+  AT extends ActionTree<Record<Key, (...args: any[]) => any>>
+> = [
+  useMethodsContext: () => MethodsContextValue<RS, MT, AT>,
+  MethodsProvider: React.FC<{
+    initialValue?: S | undefined
+  }>,
+  connect: <P>(WrapperComponent: React.ElementType<P>) => <
+    M = {
+      state: RS
+      methods: WrappedMethods<MT, AT>
+    }
+  >(
+    mapper?: ((state: RS, methods: WrappedMethods<MT, AT>) => M) | undefined
+  ) => React.FC<Omit<P, keyof M>>,
+  withProvider: <P>(
+    WrapperComponent: React.ElementType<P>,
+    options?:
+      | {
+          initialValue?: S | undefined
+        }
+      | undefined
+  ) => React.FC<P>,
+  context: React.Context<MethodsContextValue<RS, MT, AT> | null>
+]
+
+function createMethodsContext<
   S extends Record<Key, any>,
   CM extends CreateMethods<
     If<
-      L,
+      TL,
       S & {
         actionLoading: {
           [key: Key]: boolean
@@ -32,8 +65,42 @@ const createMethodsContext = <
   MT extends GetMethodTree<ReturnType<CM>>,
   AT extends GetActionTree<ReturnType<CM>>,
   L extends boolean,
+  UM extends CreateUseMethodsReturn<boolean>,
+  TL extends IfBoolean<L, GetLoadingState<UM>, L>,
   RS extends If<
-    L,
+    TL,
+    S & {
+      actionLoading: {
+        [K in keyof AT]: boolean
+      }
+    },
+    S
+  >
+>(
+  createMethods: CM,
+  defaultInitialValue: S,
+  customUseMethods?: UM
+): CreateMethodsContextReturn<S, RS, MT, AT>
+function createMethodsContext<
+  S extends Record<Key, any>,
+  CM extends CreateMethods<
+    If<
+      TL,
+      S & {
+        actionLoading: {
+          [key: Key]: boolean
+        }
+      },
+      S
+    >
+  >,
+  MT extends GetMethodTree<ReturnType<CM>>,
+  AT extends GetActionTree<ReturnType<CM>>,
+  L extends boolean,
+  UM extends CreateUseMethodsReturn<boolean>,
+  TL extends IfBoolean<L, GetLoadingState<UM>, L>,
+  RS extends If<
+    TL,
     S & {
       actionLoading: {
         [K in keyof AT]: boolean
@@ -45,8 +112,48 @@ const createMethodsContext = <
   createMethods: CM,
   defaultInitialValue: S,
   useMethodsOptions?: UseMethodsOptions<RS, AnyAction, L>,
-  customUseMethods?: typeof useMethods
-) => {
+  customUseMethods?: UM
+): CreateMethodsContextReturn<S, RS, MT, AT>
+function createMethodsContext<
+  S extends Record<Key, any>,
+  CM extends CreateMethods<
+    If<
+      TL,
+      S & {
+        actionLoading: {
+          [key: Key]: boolean
+        }
+      },
+      S
+    >
+  >,
+  MT extends GetMethodTree<ReturnType<CM>>,
+  AT extends GetActionTree<ReturnType<CM>>,
+  L extends boolean,
+  UM extends CreateUseMethodsReturn<boolean>,
+  TL extends IfBoolean<L, GetLoadingState<UM>, L>,
+  RS extends If<
+    TL,
+    S & {
+      actionLoading: {
+        [K in keyof AT]: boolean
+      }
+    },
+    S
+  >
+>(
+  createMethods: CM,
+  defaultInitialValue: S,
+  useMethodsOptions?: UseMethodsOptions<RS, AnyAction, L> | UM,
+  customUseMethods?: UM
+): CreateMethodsContextReturn<S, RS, MT, AT> {
+  const useMethodsHook =
+    typeof useMethodsOptions === 'function'
+      ? useMethodsOptions
+      : customUseMethods || (useMethods as UM)
+  const useMethodsHookOptions =
+    typeof useMethodsOptions === 'function' ? undefined : useMethodsOptions
+
   const context = createContext<MethodsContextValue<RS, MT, AT> | null>(null)
   const providerFactory = (
     props: React.ProviderProps<MethodsContextValue<RS, MT, AT>>,
@@ -57,10 +164,10 @@ const createMethodsContext = <
     children,
     initialValue,
   }) => {
-    const stateAndMethods = (customUseMethods || useMethods)(
+    const stateAndMethods = useMethodsHook(
       createMethods,
       initialValue !== undefined ? initialValue : defaultInitialValue,
-      useMethodsOptions
+      useMethodsHookOptions
     )
 
     const memoContext = useMemo(
@@ -118,14 +225,7 @@ const createMethodsContext = <
     }
     return stateAndMethods
   }
-
-  return [
-    useMethodsContext,
-    MethodsProvider,
-    connect,
-    withProvider,
-    context,
-  ] as const
+  return [useMethodsContext, MethodsProvider, connect, withProvider, context]
 }
 
 export type { MethodsContextValue }

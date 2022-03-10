@@ -222,7 +222,13 @@ import thunk from 'redux-thunk'
 import { createUseMethods } from 'react-use-methods'
 // make sure immer has been installed
 import { combineReducers } from 'react-use-methods/reducer-mapper/es/immer'
-const useMethods = createUseMethods(thunk)
+const useMethods = createUseMethods(
+  {
+    // use immer
+    reducerMapper: combineReducers,
+  },
+  thunk
+)
 
 function App() {
   const [{ count }, methods] = useMethods(
@@ -276,9 +282,12 @@ function App() {
 #### Reference
 
 ```js
+const useMethods = createUseMethods(useMethodsOptions, ...middlewares)
+// or
 const useMethods = createUseMethods(...middlewares)
 ```
 
+- `useMethodsOptions`: same as useMethods.
 - `middlewares`: custom middlewares for dispatch actions, like redux-thunk.
 
 ### createUseMethodsContext
@@ -292,6 +301,10 @@ A state management factory function that allows all components in the provider t
 import { createMethodsContext, createUseMethods } from 'react-use-methods'
 // make sure immer has been installed
 import { combineReducers } from 'react-use-methods/reducer-mapper/es/immer'
+
+const useMethods = createUseMethods({
+  reducerMapper: combineReducers,
+})
 
 const [useCountContext, CounterProvider, withCountProvider, connect] =
   createMethodsContext(
@@ -320,9 +333,14 @@ const [useCountContext, CounterProvider, withCountProvider, connect] =
     {
       count: 0,
     },
-    {
-      reducerMapper: combineReducers,
-    }
+    // customUseMethods
+    useMethods
+    // or use useMethods options, but in the way can't you use middleware
+    /*
+      {
+       reducerMapper: combineReducers,
+      }
+    */
   )
 
 export { useCountContext, CounterProvider, withCountProvider, connect }
@@ -494,6 +512,18 @@ const [
   createMethods,
   defaultInitialValue,
   useMethodsOptions,
+  customUseMethods
+)
+// or
+const [
+  useMethods,
+  MethodsProvider,
+  withMethodsProvider,
+  connect,
+  methodsContext,
+] = createUseMethodsContext(
+  createMethods,
+  defaultInitialValue,
   customUseMethods
 )
 ```

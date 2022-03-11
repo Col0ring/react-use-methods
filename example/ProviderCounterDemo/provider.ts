@@ -21,7 +21,7 @@ export interface MethodsState {
   count: number
 }
 
-const [useCountContext, CounterProvider, , withCountProvider] =
+const { useCountContext, CountProvider, withCountProvider } =
   createMethodsContext(
     (state) => {
       return {
@@ -77,10 +77,13 @@ const [useCountContext, CounterProvider, , withCountProvider] =
       count: 0,
     } as MethodsState,
     {
-      reducerMapper: combineReducers,
-      enableLoading: true,
-    },
-    useMethods
+      useMethodsOptions: {
+        reducerMapper: combineReducers,
+        enableLoading: true,
+      },
+      name: 'count',
+      customUseMethods: useMethods,
+    }
   )
 
-export { useCountContext, CounterProvider, withCountProvider }
+export { useCountContext, CountProvider, withCountProvider }

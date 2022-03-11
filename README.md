@@ -306,50 +306,61 @@ const useMethods = createUseMethods({
   reducerMapper: combineReducers,
 })
 
-const [useCountContext, CounterProvider, withCountProvider, connect] =
-  createMethodsContext(
-    (state) => {
-      return {
-        // if we don't need actions，we can move the methods to the fist level
-        increment() {
-          state.count += 1
-          return state
-        },
-        incrementDouble() {
-          return { ...state, count: state.count * 2 }
-        },
-        decrement() {
-          state.count -= 1
-          return state
-        },
-        set(current) {
-          return { ...state, count: current }
-        },
-        reset() {
-          return { ...state, count: 0 }
-        },
-      }
+const {
+  // set name to change automatically
+  useCountContext,
+  CountProvider,
+  withCountProvider,
+  connectCountContext,
+} = createMethodsContext(
+  (state) => {
+    return {
+      // if we don't need actions，we can move the methods to the fist level
+      increment() {
+        state.count += 1
+        return state
+      },
+      incrementDouble() {
+        return { ...state, count: state.count * 2 }
+      },
+      decrement() {
+        state.count -= 1
+        return state
+      },
+      set(current) {
+        return { ...state, count: current }
+      },
+      reset() {
+        return { ...state, count: 0 }
+      },
+    }
+  },
+  {
+    count: 0,
+  },
+  {
+    useMethodsOptions: {
+      reducerMapper: combineReducers,
+      enableLoading: true,
     },
-    {
-      count: 0,
-    },
-    // customUseMethods
-    useMethods
-    // or use useMethods options, but in the way can't you use middleware
-    /*
-      {
-       reducerMapper: combineReducers,
-      }
-    */
-  )
+    // set the name can help you automatically modify the return value of createMethodsContext
+    name: 'count',
+    customUseMethods: useMethods,
+  }
+)
 
-export { useCountContext, CounterProvider, withCountProvider, connect }
+export {
+  useCountContext,
+  CountProvider,
+  withCountProvider,
+  connectCountContext,
+}
 ```
 
 ```jsx
 // index.jsx
 import React from 'react'
-import { useCountContext, CounterProvider } from './provider'
+import { useCountContext, CountProvider } from './provider'
 
 function Counter() {
   const [state, methods] = useCountContext()
@@ -368,9 +379,9 @@ function Counter() {
 function App() {
   return (
     // you can give a new initialValue for different provider
-    <CounterProvider initialValue={{ count: 10 }}>
+    <CountProvider initialValue={{ count: 10 }}>
       <Counter />
-    </CounterProvider>
+    </CountProvider>
   )
 }
 
@@ -410,7 +421,7 @@ You can also use `connect` api, like `react-redux`。
 
 ```jsx
 import React from 'react'
-import { useCountContext, connect } from './provider'
+import { useCountContext, connectCountContext } from './provider'
 
 function Counter(props) {
   // inject state and methods by default
@@ -427,14 +438,18 @@ function Counter(props) {
   )
 }
 
-export default connect(Counter)()
+export default connectCountContext(Counter)()
 ```
 
 For Typescript，you can:
 
 ```tsx
 import React from 'react'
-import { useCountContext, withCountProvider } from './provider'
+import {
+  connectCountContext,
+  useCountContext,
+  withCountProvider,
+} from './provider'
 
 type CountState = ReturnType<typeof useCountContext>[0]
 type CountMethods = ReturnType<typeof useCountContext>[1]
@@ -460,14 +475,14 @@ function Counter(props: CounterProps) {
   )
 }
 
-export default connect(Counter)()
+export default connectCountContext(Counter)()
 ```
 
 Accept a mapper function:
 
 ```tsx
 import React from 'react'
-import { useCountContext, withCountProvider } from './provider'
+import { connectCountContext, useCountContext, withCountProvider } from './provider'
 
 type CountState = ReturnType<typeof useCountContext>[0]
 type CountMethods = ReturnType<typeof useCountContext>[1]
@@ -493,7 +508,7 @@ function Counter(props: CounterProps) {
   )
 }
 
-export default connect(Counter)(({ count } , methods) => ({
+export default connectCountContext(Counter)(({ count } , methods) => ({
   count,
   methods
 })
@@ -502,28 +517,29 @@ export default connect(Counter)(({ count } , methods) => ({
 #### Reference
 
 ```js
-const [
-  useMethods,
+const {
+  useMethodsContext,
   MethodsProvider,
   withMethodsProvider,
   connect,
-  methodsContext,
-] = createUseMethodsContext(
+  MethodsContext,
+} = createUseMethodsContext(
   createMethods,
   defaultInitialValue,
-  useMethodsOptions,
-  customUseMethods
-)
-// or
-const [
-  useMethods,
-  MethodsProvider,
-  withMethodsProvider,
-  connect,
-  methodsContext,
-] = createUseMethodsContext(
-  createMethods,
-  defaultInitialValue,
-  customUseMethods
+  createMethodsContextOptions
 )
 ```
+
+- `createMethodsContextOptions`:
+  ```ts
+  interface CreateMethodsContextOptions<
+    S extends Record<Key, any>,
+    UM extends CreateUseMethodsReturn<boolean>,
+    L extends boolean
+  > {
+    useMethodsOptions?: UseMethodsOptions<S, AnyAction, L>
+    customUseMethods?: UM
+    // methods context name, default: methods
+    name?: string
+  }
+  ```

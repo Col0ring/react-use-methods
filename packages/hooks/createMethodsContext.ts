@@ -19,35 +19,19 @@ type MethodsContextValue<
 
 type GetLoadingState<T extends CreateUseMethodsReturn<boolean>> =
   T extends CreateUseMethodsReturn<infer L> ? IfBoolean<L, false, L> : never
-
-type CreateMethodsContextReturn<
-  S,
-  RS,
-  MT extends MethodTree<RS, Record<Key, (...args: any[]) => any>>,
-  AT extends ActionTree<Record<Key, (...args: any[]) => any>>
-> = [
-  useMethodsContext: () => MethodsContextValue<RS, MT, AT>,
-  MethodsProvider: React.FC<{
-    initialValue?: S | undefined
-  }>,
-  connect: <P>(WrapperComponent: React.ElementType<P>) => <
-    M = {
-      state: RS
-      methods: WrappedMethods<MT, AT>
-    }
-  >(
-    mapper?: ((state: RS, methods: WrappedMethods<MT, AT>) => M) | undefined
-  ) => React.FC<Omit<P, keyof M>>,
-  withProvider: <P>(
-    WrapperComponent: React.ElementType<P>,
-    options?:
-      | {
-          initialValue?: S | undefined
-        }
-      | undefined
-  ) => React.FC<P>,
-  context: React.Context<MethodsContextValue<RS, MT, AT> | null>
-]
+interface CreateMethodsContextOptions<
+  S extends Record<Key, any>,
+  UM extends CreateUseMethodsReturn<boolean>,
+  L extends boolean,
+  N extends string
+> {
+  useMethodsOptions?: UseMethodsOptions<S, AnyAction, L>
+  customUseMethods?: UM
+  /**
+   * @default methods
+   */
+  name?: N
+}
 
 function createMethodsContext<
   S extends Record<Key, any>,
@@ -75,90 +59,28 @@ function createMethodsContext<
       }
     },
     S
-  >
->(
-  createMethods: CM,
-  defaultInitialValue: S,
-  customUseMethods?: UM
-): CreateMethodsContextReturn<S, RS, MT, AT>
-function createMethodsContext<
-  S extends Record<Key, any>,
-  CM extends CreateMethods<
-    If<
-      TL,
-      S & {
-        actionLoading: {
-          [key: Key]: boolean
-        }
-      },
-      S
-    >
   >,
-  MT extends GetMethodTree<ReturnType<CM>>,
-  AT extends GetActionTree<ReturnType<CM>>,
-  L extends boolean,
-  UM extends CreateUseMethodsReturn<boolean>,
-  TL extends IfBoolean<L, GetLoadingState<UM>, L>,
-  RS extends If<
-    TL,
-    S & {
-      actionLoading: {
-        [K in keyof AT]: boolean
-      }
-    },
-    S
-  >
+  N extends string = 'methods'
 >(
   createMethods: CM,
   defaultInitialValue: S,
-  useMethodsOptions?: UseMethodsOptions<RS, AnyAction, L>,
-  customUseMethods?: UM
-): CreateMethodsContextReturn<S, RS, MT, AT>
-function createMethodsContext<
-  S extends Record<Key, any>,
-  CM extends CreateMethods<
-    If<
-      TL,
-      S & {
-        actionLoading: {
-          [key: Key]: boolean
-        }
-      },
-      S
-    >
-  >,
-  MT extends GetMethodTree<ReturnType<CM>>,
-  AT extends GetActionTree<ReturnType<CM>>,
-  L extends boolean,
-  UM extends CreateUseMethodsReturn<boolean>,
-  TL extends IfBoolean<L, GetLoadingState<UM>, L>,
-  RS extends If<
-    TL,
-    S & {
-      actionLoading: {
-        [K in keyof AT]: boolean
-      }
-    },
-    S
-  >
->(
-  createMethods: CM,
-  defaultInitialValue: S,
-  useMethodsOptions?: UseMethodsOptions<RS, AnyAction, L> | UM,
-  customUseMethods?: UM
-): CreateMethodsContextReturn<S, RS, MT, AT> {
-  const useMethodsHook =
-    typeof useMethodsOptions === 'function'
-      ? useMethodsOptions
-      : customUseMethods || (useMethods as UM)
-  const useMethodsHookOptions =
-    typeof useMethodsOptions === 'function' ? undefined : useMethodsOptions
+  createMethodsContextOptions?: CreateMethodsContextOptions<RS, UM, L, N>
+) {
+  const {
+    useMethodsOptions,
+    customUseMethods,
+    name = 'methods',
+  } = createMethodsContextOptions || {}
+  const useMethodsHook = customUseMethods || (useMethods as UM)
+  const useMethodsHookOptions = useMethodsOptions
 
-  const context = createContext<MethodsContextValue<RS, MT, AT> | null>(null)
+  const MethodsContext = createContext<MethodsContextValue<RS, MT, AT> | null>(
+    null
+  )
   const providerFactory = (
     props: React.ProviderProps<MethodsContextValue<RS, MT, AT>>,
     children: Parameters<typeof createElement>[2]
-  ) => createElement(context.Provider, props, children)
+  ) => createElement(MethodsContext.Provider, props, children)
 
   const MethodsProvider: React.FC<{ initialValue?: S }> = ({
     children,
@@ -177,7 +99,7 @@ function createMethodsContext<
     return providerFactory(memoContext, children)
   }
 
-  const withProvider = <P>(
+  const withMethodsProvider = <P>(
     WrapperComponent: React.ElementType<P>,
     options?: { initialValue?: S }
   ) => {
@@ -191,7 +113,7 @@ function createMethodsContext<
   }
 
   // like redux connect
-  const connect = <P>(WrapperComponent: React.ElementType<P>) => {
+  const connectMethodsContext = <P>(WrapperComponent: React.ElementType<P>) => {
     return function <
       M = {
         state: RS
@@ -217,7 +139,7 @@ function createMethodsContext<
   }
 
   function useMethodsContext() {
-    const stateAndMethods = useContext(context)
+    const stateAndMethods = useContext(MethodsContext)
     if (stateAndMethods === null) {
       throw new Error(
         `useMethodsContext must be used inside a MethodsProvider.`
@@ -225,7 +147,38 @@ function createMethodsContext<
     }
     return stateAndMethods
   }
-  return [useMethodsContext, MethodsProvider, connect, withProvider, context]
+
+  const methodsName = name[0].toUpperCase() + name.slice(1)
+  type MethodsName = Capitalize<N>
+  type UseMethodsContext = `use${MethodsName}Context`
+  type MethodsProvider = `${MethodsName}Provider`
+  type WithMethodsProvider = `with${MethodsName}Provider`
+  type ConnectMethodsContext = `connect${MethodsName}Context`
+  type MethodsContext = `${MethodsName}Context`
+  return {
+    [`use${methodsName}Context`]: useMethodsContext,
+    [`${methodsName}Provider`]: MethodsProvider,
+    [`connect${methodsName}Context`]: connectMethodsContext,
+    [`with${methodsName}Provider`]: withMethodsProvider,
+    [`${methodsName}Context`]: MethodsContext,
+  } as {
+    [P in
+      | UseMethodsContext
+      | MethodsProvider
+      | WithMethodsProvider
+      | ConnectMethodsContext
+      | MethodsContext]: P extends UseMethodsContext
+      ? typeof useMethodsContext
+      : P extends MethodsProvider
+      ? typeof MethodsProvider
+      : P extends WithMethodsProvider
+      ? typeof withMethodsProvider
+      : P extends MethodsContext
+      ? typeof MethodsContext
+      : P extends ConnectMethodsContext
+      ? typeof connectMethodsContext
+      : never
+  }
 }
 
 export type { MethodsContextValue }

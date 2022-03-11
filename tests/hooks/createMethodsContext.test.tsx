@@ -32,8 +32,11 @@ describe('hook factory createMethodsContext', () => {
     )
   }
   it('should create a hook , a provider and a provider HOC', () => {
-    const [useSharedNumber, SharedNumberProvider, withSharedNumberProvider] =
-      setUpContext()
+    const {
+      useMethodsContext: useSharedNumber,
+      MethodsProvider: SharedNumberProvider,
+      withMethodsProvider: withSharedNumberProvider,
+    } = setUpContext()
     expect(useSharedNumber).toBeInstanceOf(Function)
     expect(SharedNumberProvider).toBeInstanceOf(Function)
     expect(withSharedNumberProvider).toBeInstanceOf(Function)
@@ -41,7 +44,7 @@ describe('hook factory createMethodsContext', () => {
 
   describe('when using created hook', () => {
     it('should throw out of a provider', () => {
-      const [useSharedNumber] = setUpContext()
+      const { useMethodsContext: useSharedNumber } = setUpContext()
       const { result } = renderHook(() => useSharedNumber())
       expect(result.error).toEqual(
         new Error('useMethodsContext must be used inside a MethodsProvider.')
@@ -49,7 +52,10 @@ describe('hook factory createMethodsContext', () => {
     })
 
     const setUp = () => {
-      const [useSharedNumber, SharedNumberProvider] = createMethodsContext(
+      const {
+        useMethodsContext: useSharedNumber,
+        MethodsProvider: SharedNumberProvider,
+      } = createMethodsContext(
         (state) => ({
           increment() {
             return { ...state, sharedNumber: state.sharedNumber + 1 }
@@ -76,7 +82,10 @@ describe('hook factory createMethodsContext', () => {
     })
 
     it('should init state and updater when use provider hoc', () => {
-      const [useSharedNumber, , , withSharedNumberProvider] = setUpContext()
+      const {
+        useMethodsContext: useSharedNumber,
+        withMethodsProvider: withSharedNumberProvider,
+      } = setUpContext()
       const { result } = renderHook(() => useSharedNumber(), {
         wrapper: withSharedNumberProvider(
           ({ children }) => <div>{children}</div>,
@@ -109,7 +118,11 @@ describe('hook factory createMethodsContext', () => {
   })
 
   describe('when using among multiple components', () => {
-    const [useSharedNumber, SharedNumberProvider, connect] = setUpContext()
+    const {
+      useMethodsContext: useSharedNumber,
+      MethodsProvider: SharedNumberProvider,
+      connectMethodsContext,
+    } = setUpContext()
 
     const DisplayComponent = () => {
       const [{ sharedNumber }] = useSharedNumber()
@@ -176,7 +189,7 @@ describe('hook factory createMethodsContext', () => {
         state: SharedNumberState
         methods: SharedNumberMethods
       }
-      const InjectDisplayComponent = connect(
+      const InjectDisplayComponent = connectMethodsContext(
         ({ state }: InjectDisplayComponentProps) => {
           return <p>{state.sharedNumber}</p>
         }
@@ -185,7 +198,7 @@ describe('hook factory createMethodsContext', () => {
       interface InjectUpdateComponentProps {
         increment: SharedNumberMethods['increment']
       }
-      const InjectUpdateComponent = connect(
+      const InjectUpdateComponent = connectMethodsContext(
         ({ increment }: InjectUpdateComponentProps) => {
           return (
             <button type="button" onClick={() => increment()}>

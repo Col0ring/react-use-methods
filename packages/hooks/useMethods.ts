@@ -4,10 +4,7 @@ import { isInternalAction } from '../utils'
 import { defaultUseReducer } from './createUseReducer'
 import usePrevious from './usePrevious'
 
-// 外部 action
-type DispatchAction = Omit<AnyAction, 'dispatch'>
-
-declare function dispatchFunction(value: DispatchAction): Promisify<any>
+declare function dispatchFunction(value: AnyAction): Promisify<any>
 declare function dispatchFunction(value: any): Promisify<any>
 
 type DispatchFunction = typeof dispatchFunction

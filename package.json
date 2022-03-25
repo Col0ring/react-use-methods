@@ -1,6 +1,6 @@
 {
   "name": "react-use-methods",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "license": "MIT",
   "private": false,
   "author": {
@@ -20,23 +20,23 @@
     "reducer-mapper",
     "packages"
   ],
-  "typings": "./dist/types/index.d.ts",
-  "main": "./dist/react-use-methods.umd.js",
-  "module": "./dist/react-use-methods.es.js",
+  "typings": "./dist/react-use-methods.d.ts",
+  "main": "./dist/react-use-methods.cjs.js",
+  "module": "./dist/react-use-methods.esm.js",
   "exports": {
     ".": {
-      "import": "./dist/react-use-methods.es.js",
-      "require": "./dist/react-use-methods.umd.js"
+      "import": "./dist/react-use-methods.esm.js",
+      "require": "./dist/react-use-methods.cjs.js"
     },
     "./reducer-mapper/*": {
-      "import": "./reducer-mapper/*.js",
-      "require": "./reducer-mapper/*.js"
+      "import": "./reducer-mapper/*/index.esm.js",
+      "require": "./reducer-mapper/*/index.cjs.js"
     }
   },
   "scripts": {
     "dev": "vite",
-    "build:plugins": "tsc -p tsconfig-reducer.json && tsc -p tsconfig-reducer.es.json",
-    "build:package": "vite build && tsc -p tsconfig-package.json",
+    "build:plugins": "rollup -c rollup-reducer.config.ts --configPlugin 'typescript={tsconfig: `./tsconfig.build.json`}'",
+    "build:package": "rollup -c rollup.config.ts --configPlugin 'typescript={tsconfig: `./tsconfig.build.json`}'",
     "build": "npm run build:package && npm run build:plugins",
     "postbuild": "npm run lint",
     "serve": "vite preview",
@@ -55,11 +55,19 @@
     "react": "^17.0.0"
   },
   "dependencies": {
-    "immer": "^9.0.6"
+    "@babel/runtime": "^7.17.8"
   },
   "devDependencies": {
+    "@babel/core": "^7.17.8",
+    "@babel/plugin-transform-runtime": "^7.17.0",
+    "@babel/preset-env": "^7.16.11",
     "@commitlint/cli": "^13.1.0",
     "@commitlint/config-angular": "^13.1.0",
+    "@rollup/plugin-babel": "^5.3.1",
+    "@rollup/plugin-commonjs": "^21.0.2",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^13.1.3",
+    "@rollup/plugin-typescript": "^8.3.1",
     "@testing-library/react": "^12.0.0",
     "@testing-library/react-hooks": "^7.0.2",
     "@types/jest": "^27.0.1",
@@ -83,14 +91,21 @@
     "eslint-plugin-react": "^7.25.1",
     "eslint-plugin-react-hooks": "^4.2.0",
     "husky": "^7.0.2",
+    "immer": "^9.0.6",
     "jest": "^27.1.0",
     "lint-staged": "^11.1.2",
     "prettier": "^2.3.2",
     "react": "^17.0.0",
     "react-dom": "^17.0.0",
     "react-thunk": "^1.0.0",
+    "rollup": "^2.70.1",
+    "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-dts": "^4.2.0",
+    "rollup-plugin-eslint2": "^1.0.2",
+    "rollup-plugin-terser": "^7.0.2",
     "ts-jest": "^27.0.5",
     "ts-node": "^10.2.1",
+    "tslib": "^2.3.1",
     "typescript": "^4.6.2",
     "vite": "^2.5.4",
     "vite-plugin-eslint": "^1.3.0"

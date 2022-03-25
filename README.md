@@ -222,6 +222,7 @@ import thunk from 'redux-thunk'
 import { createUseMethods } from 'react-use-methods'
 // make sure immer has been installed
 import { combineReducers } from 'react-use-methods/reducer-mapper/es/immer'
+// note: npm install immer
 const useMethods = createUseMethods(
   {
     // use immer

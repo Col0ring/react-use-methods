@@ -1,5 +1,6 @@
 import produce, { Draft } from 'immer'
-import type { Reducer, AnyAction, Promisify, ReducerResult } from '../type'
+import { Reducer, AnyAction, Promisify, ReducerResult } from '../type'
+
 export function combineReducers<State, Action extends AnyAction>(
   reducer: Reducer<State, Action>
 ): Reducer<State, Action> {

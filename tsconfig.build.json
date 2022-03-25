@@ -8,12 +8,12 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "ESNEXT",
+    "module": "ESNext",
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react"
+    "baseUrl": "./"
   },
-  "include": ["packages"]
+  "include": ["./rollup.config.ts", "./rollup-reducer.config.ts"]
 }

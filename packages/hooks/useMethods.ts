@@ -42,15 +42,13 @@ type CreateMethodsReturn<
   | {
       methods: MT
       actions?: AT
-      effects?: Partial<
-        {
-          [P in keyof S]: (
-            dispatch: DispatchFunction,
-            newValue: S[P],
-            oldValue: S[P]
-          ) => void
-        }
-      >
+      effects?: Partial<{
+        [P in keyof S]: (
+          dispatch: DispatchFunction,
+          newValue: S[P],
+          oldValue: S[P]
+        ) => void
+      }>
     }
 
 type GetMethodTree<
@@ -175,15 +173,13 @@ function useMethods<
     )
     if (isSimplyMethods(methods)) {
       return {
-        effects: {} as Partial<
-          {
-            [P in keyof S]: (
-              dispatch: React.Dispatch<AnyAction>,
-              newValue: S[P],
-              oldValue: S[P]
-            ) => void
-          }
-        >,
+        effects: {} as Partial<{
+          [P in keyof S]: (
+            dispatch: React.Dispatch<AnyAction>,
+            newValue: S[P],
+            oldValue: S[P]
+          ) => void
+        }>,
         actions: {} as AT,
         methods,
       }
@@ -286,8 +282,13 @@ function useMethods<
     [createMethods, enableLoading]
   )
 
+  const mapperReducer = useMemo(
+    () => reducerMapper(reducer),
+    [reducerMapper, reducer]
+  )
+
   const [state, dispatch, getAsyncState] = customUseReducer(
-    reducerMapper(reducer),
+    mapperReducer,
     initialState,
     (arg) => {
       if (enableLoading) {
@@ -303,12 +304,7 @@ function useMethods<
   const prevState = usePrevious(state)
 
   const wrappedMethods: WrappedMethods<MT, AT> = useMemo(() => {
-    const methods = !isSimplyMethods(createdMethods)
-      ? createdMethods.methods ?? {}
-      : createdMethods
-    const actions = !isSimplyMethods(createdMethods)
-      ? createdMethods.actions ?? {}
-      : {}
+    const { actions = {} as AT, methods } = createMethods(state, getAsyncState)
     // 每次调用时重新构成闭包，更新 state
     const methodsTypes = Object.keys(methods)
     const actionsTypes = Object.keys(actions)
@@ -333,7 +329,7 @@ function useMethods<
             // set actionLoading state
             payload: [type, true],
           })
-        const res = actions[type](...payload)({
+        const res = (actions as AT)[type](...payload)({
           type,
           dispatch: (value, ...rest) => {
             if (isInternalAction(value)) {
@@ -359,9 +355,8 @@ function useMethods<
       m[type] = m.actions[type] as WrappedMethods<MT, AT>[keyof AT]
       return m
     }, currentWrappedMethods)
-
     return currentWrappedMethods
-  }, [createdMethods, dispatch, enableLoading])
+  }, [createMethods, state, getAsyncState, dispatch, enableLoading])
 
   useEffect(() => {
     const currentCreatedMethods = createMethods(state, getAsyncState)

@@ -84,9 +84,10 @@ const Counter: React.FC = () => {
         },
       }
     },
-    {
-      count: 0,
-    } as MethodsState,
+    () =>
+      ({
+        count: 0,
+      } as MethodsState),
     {
       reducerMapper: combineReducers,
       enableLoading: true,

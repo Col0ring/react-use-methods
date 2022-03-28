@@ -22,4 +22,7 @@ export default defineConfig({
       '@packages': resolve('./packages'),
     },
   },
+  server: {
+    port: 4444,
+  },
 })

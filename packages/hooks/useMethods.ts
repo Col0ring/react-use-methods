@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from 'react'
-import { Key, Reducer, AnyAction, If, Promisify } from '../type'
+import { useEffect, useMemo } from 'react'
+import { Key, Reducer, AnyAction, Promisify, If } from '../type'
 import { isInternalAction } from '../utils'
 import { defaultUseReducer } from './createUseReducer'
 import usePrevious from './usePrevious'
@@ -9,8 +9,6 @@ declare function dispatchFunction(value: any): Promisify<any>
 
 type DispatchFunction = typeof dispatchFunction
 
-// TODO: correct key
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface MethodAction<P extends any[]> {
   type: Key
   // 用于中间件的操作
@@ -42,13 +40,15 @@ type CreateMethodsReturn<
   | {
       methods: MT
       actions?: AT
-      effects?: Partial<{
-        [P in keyof S]: (
-          dispatch: DispatchFunction,
-          newValue: S[P],
-          oldValue: S[P]
-        ) => void
-      }>
+      effects?: Partial<
+        {
+          [P in keyof S]: (
+            dispatch: DispatchFunction,
+            newValue: S[P],
+            oldValue: S[P]
+          ) => void
+        }
+      >
     }
 
 type GetMethodTree<
@@ -149,7 +149,7 @@ function useMethods<
   >
 >(
   createMethods: CM,
-  initialState: S,
+  initialStateProp: S | (() => S),
   useMethodsOptions?: UseMethodsOptions<RS, AnyAction, L>
 ): [RS, WrappedMethods<MT, AT>] {
   const {
@@ -157,9 +157,18 @@ function useMethods<
     customUseReducer = defaultUseReducer,
     reducerMapper = (v: Reducer<RS, AnyAction>) => v,
   } = useMethodsOptions || {}
-
-  const createdMethods = useMemo(() => {
-    const methods = createMethods(
+  const initialState = useMemo(
+    () =>
+      typeof initialStateProp === 'function'
+        ? (initialStateProp as () => S)()
+        : initialStateProp,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
+  // action loading state
+  const initialLoadingState = useMemo(() => {
+    // no emit
+    const { actions } = createMethods(
       enableLoading
         ? { ...initialState, actionLoading: {} }
         : (initialState as RS),
@@ -171,25 +180,8 @@ function useMethods<
             }
           : (initialState as RS)
     )
-    if (isSimplyMethods(methods)) {
-      return {
-        effects: {} as Partial<{
-          [P in keyof S]: (
-            dispatch: React.Dispatch<AnyAction>,
-            newValue: S[P],
-            oldValue: S[P]
-          ) => void
-        }>,
-        actions: {} as AT,
-        methods,
-      }
-    }
-    return methods
-  }, [createMethods, enableLoading, initialState])
 
-  // action loading state
-  const initialLoadingState = useMemo(() => {
-    return Object.keys(createdMethods.actions || {}).reduce(
+    return Object.keys(actions || {}).reduce(
       (prev, next) => {
         prev[next as keyof AT] = false
         return prev
@@ -198,7 +190,8 @@ function useMethods<
         [K in keyof AT]: boolean
       }
     )
-  }, [createdMethods.actions])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // reducer 每次都运行 createMethods 拿到并传入最新的状态
   const reducer: Reducer<RS, AnyAction> = useMemo(
@@ -303,11 +296,15 @@ function useMethods<
 
   const prevState = usePrevious(state)
 
+  const { actions, methods, effects } = useMemo(
+    () => createMethods(state, getAsyncState),
+    [createMethods, getAsyncState, state]
+  )
+
   const wrappedMethods: WrappedMethods<MT, AT> = useMemo(() => {
-    const { actions = {} as AT, methods } = createMethods(state, getAsyncState)
     // 每次调用时重新构成闭包，更新 state
     const methodsTypes = Object.keys(methods)
-    const actionsTypes = Object.keys(actions)
+    const actionsTypes = Object.keys(actions || {})
 
     const currentWrappedMethods = {
       methods: {},
@@ -356,23 +353,32 @@ function useMethods<
       return m
     }, currentWrappedMethods)
     return currentWrappedMethods
-  }, [createMethods, state, getAsyncState, dispatch, enableLoading])
+  }, [methods, actions, dispatch, enableLoading])
 
   useEffect(() => {
-    const currentCreatedMethods = createMethods(state, getAsyncState)
-    if (isSimplyMethods(currentCreatedMethods)) {
+    if (!effects) {
       return
     }
-    const { effects } = currentCreatedMethods
 
     if (effects && state && prevState) {
-      Object.keys(effects).forEach((prop: keyof typeof effects) => {
+      Object.keys(effects).forEach((prop: keyof RS) => {
         if (state[prop] !== prevState[prop]) {
-          effects[prop]?.(dispatch, state[prop], prevState[prop])
+          // eslint-disable-next-line @typescript-eslint/no-extra-semi
+          ;(
+            effects as Partial<
+              {
+                [P in keyof RS]: (
+                  dispatch: DispatchFunction,
+                  newValue: RS[P],
+                  oldValue: RS[P]
+                ) => void
+              }
+            >
+          )[prop]?.(dispatch, state[prop], prevState[prop])
         }
       })
     }
-  }, [state, dispatch, prevState, createMethods, getAsyncState])
+  }, [state, dispatch, prevState, createMethods, getAsyncState, effects])
 
   return [state, wrappedMethods]
 }

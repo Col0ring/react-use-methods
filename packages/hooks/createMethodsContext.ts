@@ -63,7 +63,7 @@ function createMethodsContext<
   N extends string = 'methods'
 >(
   createMethods: CM,
-  defaultInitialValue: S,
+  defaultInitialValue: S | (() => S),
   createMethodsContextOptions?: CreateMethodsContextOptions<RS, UM, L, N>
 ) {
   const {
@@ -82,7 +82,7 @@ function createMethodsContext<
     children: Parameters<typeof createElement>[2]
   ) => createElement(MethodsContext.Provider, props, children)
 
-  const MethodsProvider: React.FC<{ initialValue?: S }> = ({
+  const MethodsProvider: React.FC<{ initialValue?: S | (() => S) }> = ({
     children,
     initialValue,
   }) => {

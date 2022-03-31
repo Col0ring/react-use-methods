@@ -45,9 +45,7 @@ export type Middleware<Action extends AnyAction, State> = (
   store: Store<Action, State>
 ) => (next: Dispatch<Action>) => (action: Action) => any
 
-export type IfBoolean<L extends any, Condition1, Condition2> = [
-  boolean
-] extends [L]
+export type IfBoolean<L, Condition1, Condition2> = [boolean] extends [L]
   ? Condition1
   : Condition2
 

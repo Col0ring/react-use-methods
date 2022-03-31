@@ -40,15 +40,13 @@ type CreateMethodsReturn<
   | {
       methods: MT
       actions?: AT
-      effects?: Partial<
-        {
-          [P in keyof S]: (
-            dispatch: DispatchFunction,
-            newValue: S[P],
-            oldValue: S[P]
-          ) => void
-        }
-      >
+      effects?: Partial<{
+        [P in keyof S]: (
+          dispatch: DispatchFunction,
+          newValue: S[P],
+          oldValue: S[P]
+        ) => void
+      }>
     }
 
 type GetMethodTree<
@@ -365,15 +363,13 @@ function useMethods<
         if (state[prop] !== prevState[prop]) {
           // eslint-disable-next-line @typescript-eslint/no-extra-semi
           ;(
-            effects as Partial<
-              {
-                [P in keyof RS]: (
-                  dispatch: DispatchFunction,
-                  newValue: RS[P],
-                  oldValue: RS[P]
-                ) => void
-              }
-            >
+            effects as Partial<{
+              [P in keyof RS]: (
+                dispatch: DispatchFunction,
+                newValue: RS[P],
+                oldValue: RS[P]
+              ) => void
+            }>
           )[prop]?.(dispatch, state[prop], prevState[prop])
         }
       })

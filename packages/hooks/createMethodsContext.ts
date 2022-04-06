@@ -113,7 +113,10 @@ function createMethodsContext<
   }
 
   // like redux connect
-  const connectMethodsContext = <P>(WrapperComponent: React.ElementType<P>) => {
+  const connectMethodsContext = <P>(
+    WrapperComponent: React.ElementType<P>,
+    throwErrorIfNotInContext = true
+  ) => {
     return function <
       M = {
         state: RS
@@ -121,7 +124,10 @@ function createMethodsContext<
       }
     >(mapper?: (state: RS, methods: WrappedMethods<MT, AT>) => M) {
       return function ContextWrapper(props) {
-        const [state, methods] = useMethodsContext()
+        const [state, methods] =
+          useMethodsContext(throwErrorIfNotInContext) ||
+          ([{}, {}] as MethodsContextValue<RS, MT, AT>)
+
         const mapperProps = useMemo(
           () =>
             mapper?.(state, methods) || {
@@ -138,9 +144,9 @@ function createMethodsContext<
     }
   }
 
-  function useMethodsContext() {
+  function useMethodsContext(throwErrorIfNotInContext = true) {
     const stateAndMethods = useContext(MethodsContext)
-    if (stateAndMethods === null) {
+    if (throwErrorIfNotInContext && stateAndMethods === null) {
       throw new Error(
         `useMethodsContext must be used inside a MethodsProvider.`
       )

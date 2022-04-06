@@ -144,9 +144,15 @@ function createMethodsContext<
     }
   }
 
-  function useMethodsContext(throwErrorIfNotInContext = true) {
-    const stateAndMethods = useContext(MethodsContext)
-    if (throwErrorIfNotInContext && stateAndMethods === null) {
+  function useMethodsContext<T extends boolean>(
+    throwErrorIfNotInContext?: T
+  ): [T] extends [false]
+    ? MethodsContextValue<RS, MT, AT> | null
+    : MethodsContextValue<RS, MT, AT> {
+    const stateAndMethods = useContext(MethodsContext) as [T] extends [false]
+      ? MethodsContextValue<RS, MT, AT> | null
+      : MethodsContextValue<RS, MT, AT>
+    if ((throwErrorIfNotInContext ?? true) && stateAndMethods === null) {
       throw new Error(
         `useMethodsContext must be used inside a MethodsProvider.`
       )

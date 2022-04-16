@@ -149,7 +149,7 @@ function useMethods<
   createMethods: CM,
   initialStateProp: S | (() => S),
   useMethodsOptions?: UseMethodsOptions<RS, AnyAction, L>
-): [RS, WrappedMethods<MT, AT>] {
+): [RS, WrappedMethods<MT, AT>, () => RS] {
   const {
     enableLoading = false,
     customUseReducer = defaultUseReducer,
@@ -376,7 +376,7 @@ function useMethods<
     }
   }, [state, dispatch, prevState, createMethods, getAsyncState, effects])
 
-  return [state, wrappedMethods]
+  return [state, wrappedMethods, getAsyncState]
 }
 
 export type {

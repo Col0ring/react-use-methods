@@ -38,7 +38,7 @@ export type CreateUseMethodsReturn<LL extends boolean> = <
   createMethods: CM,
   initialState: S | (() => S),
   useMethodsOptions?: UseMethodsOptions<RS, AnyAction, L>
-) => [RS, WrappedMethods<MT, AT>]
+) => [RS, WrappedMethods<MT, AT>, () => RS]
 
 function createUseMethods<Action extends AnyAction, State>(
   ...middlewares: Middleware<Action, State>[]

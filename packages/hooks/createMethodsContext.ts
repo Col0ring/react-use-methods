@@ -15,7 +15,7 @@ type MethodsContextValue<
   S,
   MT extends MethodTree<S, Record<Key, (...args: any[]) => any>>,
   AT extends ActionTree<Record<Key, (...args: any[]) => any>>
-> = [S, WrappedMethods<MT, AT>]
+> = [S, WrappedMethods<MT, AT>, () => S]
 
 type GetLoadingState<T extends CreateUseMethodsReturn<boolean>> =
   T extends CreateUseMethodsReturn<infer L> ? IfBoolean<L, false, L> : never
@@ -126,7 +126,7 @@ function createMethodsContext<
       return function ContextWrapper(props) {
         const [state, methods] =
           useMethodsContext(throwErrorIfNotInContext) ||
-          ([{}, {}] as MethodsContextValue<RS, MT, AT>)
+          ([{}, {}, () => ({})] as MethodsContextValue<RS, MT, AT>)
 
         const mapperProps = useMemo(
           () =>

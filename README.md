@@ -176,7 +176,7 @@ function App() {
 #### Reference
 
 ```js
-const [state, methods] = useMethods(
+const [state, methods, getState] = useMethods(
   createMethods,
   initialState,
   useMethodsOptions
